@@ -37,6 +37,17 @@ func NewRouter(handler *handler.Handler) *fiber.App {
 
 	api.Get("databasez", handler.DatabaseHealth)
 
+	// Video routes
+	api.Get("/videos", handler.GetVideos)
+	api.Get("/videos/:id", handler.GetVideoByID)
+	api.Put("/videos/:id/game", handler.UpdateVideoGame)
+
+	// Game routes
+	api.Get("/games", handler.GetGames)
+	api.Get("/games/:id", handler.GetGameByID)
+	api.Post("/games", handler.CreateGame)
+	api.Get("/games/steam/search", handler.SearchSteamGames)
+
 	fSys, err := fs.Sub(web.EmbeddedFiles, "public")
 	if err != nil {
 		panic("Failed to create sub filesystem: " + err.Error())

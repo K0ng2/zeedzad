@@ -66,3 +66,9 @@ func Response[T any](r T, m *model.Meta) model.APIResponse[T] {
 		Meta: m,
 	}
 }
+
+var (
+	ErrInvalidPathParams  = model.Error{Error: "invalid path parameters"}
+	ErrInvalidRequestBody = model.Error{Error: "invalid request body"}
+	ErrInvalidQueryParams = model.Error{Error: "invalid query parameters"}
+)

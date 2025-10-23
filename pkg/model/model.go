@@ -28,3 +28,60 @@ type DatabaseHealth struct {
 	Database  string    `json:"database"`
 	Uptime    string    `json:"uptime"`
 }
+
+type Error struct {
+	Error string `json:"error"`
+}
+
+// Video related models
+type VideoResponse struct {
+	ID           string    `json:"id"`
+	YoutubeID    string    `json:"youtube_id"`
+	Title        string    `json:"title"`
+	Description  *string   `json:"description"`
+	Thumbnail    *string   `json:"thumbnail"`
+	PublishedAt  time.Time `json:"published_at"`
+	ChannelID    string    `json:"channel_id"`
+	ChannelTitle *string   `json:"channel_title"`
+	Game         *GameInfo `json:"game"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type GameInfo struct {
+	ID    string  `json:"id"`
+	AppID string  `json:"app_id"`
+	Name  string  `json:"name"`
+	Icon  *string `json:"icon"`
+	Logo  *string `json:"logo"`
+}
+
+type UpdateVideoGameRequest struct {
+	GameID string `json:"game_id"`
+}
+
+// Game related models
+type GameResponse struct {
+	ID        string    `json:"id"`
+	AppID     string    `json:"app_id"`
+	Name      string    `json:"name"`
+	Icon      *string   `json:"icon"`
+	Logo      *string   `json:"logo"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type CreateGameRequest struct {
+	AppID string  `json:"app_id"`
+	Name  string  `json:"name"`
+	Icon  *string `json:"icon"`
+	Logo  *string `json:"logo"`
+}
+
+// Steam API response
+type SteamAppSearchResult struct {
+	AppID string `json:"appid"`
+	Name  string `json:"name"`
+	Icon  string `json:"icon"`
+	Logo  string `json:"logo"`
+}
