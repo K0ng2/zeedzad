@@ -1,0 +1,6 @@
+[tools]
+bun = "1.3"
+go = "1.25"
+
+[tasks.swag]
+run = "swag init -d pkg -g server/server.go -o pkg/docs --ot go"

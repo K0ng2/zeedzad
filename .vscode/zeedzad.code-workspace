@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "go.goroot": "${workspaceFolder}/.vscode/mise-tools/goRoot",
+    "go.alternateTools": {
+      "go": "${workspaceFolder}/.vscode/mise-tools/go",
+      "gopls": "${workspaceFolder}/.vscode/mise-tools/gopls"
+    },
+    "debug.javascript.defaultRuntimeExecutable": {
+      "pwa-node": "${workspaceFolder}/.vscode/mise-tools/node"
+    }
+  }
+}
