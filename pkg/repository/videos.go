@@ -105,8 +105,9 @@ func (r *Repository) UpdateVideoGame(ctx context.Context, videoID, gameID uuid.U
 }
 
 func (r *Repository) CreateVideo(ctx context.Context, video repoModel.Videos) error {
-	stmt := Videos.INSERT(Videos.MutableColumns).
+	stmt := Videos.INSERT(Videos.ID, Videos.YoutubeID, Videos.Title, Videos.Description, Videos.Thumbnail, Videos.PublishedAt, Videos.ChannelID, Videos.ChannelTitle, Videos.GameID, Videos.CreatedAt, Videos.UpdatedAt).
 		VALUES(
+			video.ID,
 			video.YoutubeID,
 			video.Title,
 			video.Description,
@@ -125,6 +126,24 @@ func (r *Repository) CreateVideo(ctx context.Context, video repoModel.Videos) er
 	}
 
 	return nil
+}
+
+func (r *Repository) GetVideoByYouTubeID(ctx context.Context, youtubeID string) (*model.VideoResponse, error) {
+	var video VideoWithGame
+
+	stmt := selectVideos().WHERE(Videos.YoutubeID.EQ(sqlite.String(youtubeID)))
+
+	err := stmt.QueryContext(ctx, r.ex, &video)
+	if err != nil {
+		return nil, FormatError("get video by youtube id", err)
+	}
+
+	responses := convertToVideoResponses([]VideoWithGame{video})
+	if len(responses) == 0 {
+		return nil, nil
+	}
+
+	return &responses[0], nil
 }
 
 func convertToVideoResponses(videos []VideoWithGame) []model.VideoResponse {

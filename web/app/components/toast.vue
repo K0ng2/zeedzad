@@ -33,7 +33,7 @@
 						<!-- Icon -->
 						<FontAwesomeIcon
 							:icon="getToastIcon(toast.type)"
-							class="w-6 h-6 flex-shrink-0"
+							class="w-6 h-6 shrink-0"
 						/>
 
 						<!-- Content -->
