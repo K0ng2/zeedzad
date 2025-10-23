@@ -5,5 +5,6 @@ import (
 )
 
 var (
-	SQLITE_PATH = os.Getenv("SQLITE_PATH")
+	SQLITE_PATH     = os.Getenv("SQLITE_PATH")
+	YOUTUBE_API_KEY = os.Getenv("YOUTUBE_API_KEY")
 )

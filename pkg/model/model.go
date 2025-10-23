@@ -85,3 +85,11 @@ type SteamAppSearchResult struct {
 	Icon  string `json:"icon"`
 	Logo  string `json:"logo"`
 }
+
+// Sync result
+type SyncResult struct {
+	Added   int `json:"added"`
+	Skipped int `json:"skipped"`
+	Errors  int `json:"errors"`
+	Total   int `json:"total"`
+}

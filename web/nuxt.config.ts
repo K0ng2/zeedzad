@@ -61,6 +61,9 @@ export default defineNuxtConfig({
 	},
 	runtimeConfig: {
 		API_BASE_URL: process.env.API_BASE_URL || 'http://localhost:8088',
+		public: {
+			apiBase: process.env.NUXT_PUBLIC_API_BASE || '/api',
+		},
 	},
 	modules: [
 		'@vite-pwa/nuxt',

@@ -1,0 +1,26 @@
+services:
+  server:
+    container_name: db-server
+    user: ${UID}:${GID}
+    ports:
+      - 8088:8088
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: always
+      - ${API_DATA}:/app/data
+    mem_limit: 256m
+    networks:
+      - internal
+      - public
+
+networks:
+  public:
+    name: main
+    driver: bridge
+    external: true
+  internal:
+    driver: bridge
