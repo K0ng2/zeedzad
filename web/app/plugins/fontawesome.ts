@@ -11,10 +11,16 @@ import {
 	faPen,
 	faTimes,
 	faCheckCircle,
-	faTrash
+	faTrash,
+	faHeart,
+	faCalendar,
+	faExternalLinkAlt,
+	faCheck,
+	faInfoCircle,
+	faExclamationTriangle
 } from "@fortawesome/free-solid-svg-icons";
 
-import { faYoutube } from "@fortawesome/free-brands-svg-icons";
+import { faYoutube, faGithub } from "@fortawesome/free-brands-svg-icons";
 
 const icons = [
 	faSearch,
@@ -29,6 +35,13 @@ const icons = [
 	faTimes,
 	faCheckCircle,
 	faTrash,
+	faHeart,
+	faGithub,
+	faCalendar,
+	faExternalLinkAlt,
+	faCheck,
+	faInfoCircle,
+	faExclamationTriangle,
 ];
 
 // This is important, we are going to let Nuxt worry about the CSS

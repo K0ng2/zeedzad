@@ -1,7 +1,65 @@
-@import url("https://fonts.googleapis.com/css2?family=Mitr&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
 @import "tailwindcss";
-@plugin "daisyui";
+
+@plugin "daisyui" {
+	themes: light --default, dark --prefersdark, cupcake, cyberpunk, dracula, synthwave;
+}
+
+/* Custom dark mode variant integration */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
-	--font-sans: 'Mitr', sans-serif;
+	--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+	/* Custom color enhancements */
+	--color-primary-muted: oklch(65% 0.15 240);
+	--color-gradient-start: oklch(60% 0.3 250);
+	--color-gradient-end: oklch(55% 0.25 280);
+}
+
+/* Custom gradient utilities */
+.gradient-primary {
+	background: linear-gradient(135deg, var(--color-gradient-start) 0%, var(--color-gradient-end) 100%);
+}
+
+.gradient-hero {
+	background: linear-gradient(180deg, oklch(98% 0.01 240) 0%, oklch(95% 0.02 240) 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+	.gradient-hero {
+		background: linear-gradient(180deg, oklch(20% 0.02 240) 0%, oklch(15% 0.03 240) 100%);
+	}
+}
+
+/* Smooth transitions */
+* {
+	transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+	transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	transition-duration: 200ms;
+}
+
+/* Card hover effects */
+.card-hover {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Glass morphism effect */
+.glass-effect {
+	background: rgba(255, 255, 255, 0.8);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+	.glass-effect {
+		background: rgba(0, 0, 0, 0.4);
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
 }
