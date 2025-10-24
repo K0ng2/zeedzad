@@ -5,7 +5,7 @@
 			<div class="container mx-auto px-4 py-12 md:py-16">
 				<div class="max-w-4xl mx-auto text-center mb-8">
 					<h1
-						class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+						class="text-5xl md:text-6xl font-bold mb-4 bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent"
 					>
 						OPZTV Videos
 					</h1>

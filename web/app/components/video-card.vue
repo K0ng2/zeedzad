@@ -9,7 +9,7 @@
 			/>
 			<!-- Gradient Overlay on Hover -->
 			<div
-				class="absolute inset-0 bg-gradient-to-t from-base-300/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+				class="absolute inset-0 bg-linear-to-t from-base-300/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
 			></div>
 
 			<!-- Date Badge -->
@@ -54,7 +54,7 @@
 				>
 					<!-- Game Badge -->
 					<div class="flex items-center gap-2 p-3 bg-primary/5 rounded-lg border border-primary/20">
-						<div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+						<div class="shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
 							<font-awesome-icon
 								icon="gamepad"
 								class="w-4 h-4 text-primary"

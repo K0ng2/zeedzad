@@ -7,15 +7,14 @@
 					<!-- Logo/Brand -->
 					<div class="flex items-center gap-3">
 						<div
-							class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center"
-						>
+							class="w-10 h-10 rounded-lg bg-linear-to-br from-primary to-secondary flex items-center justify-center">
 							<font-awesome-icon
 								icon="gamepad"
 								class="w-5 h-5 text-white"
 							/>
 						</div>
 						<div>
-							<h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+							<h1 class="text-xl font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
 								Zeedzad
 							</h1>
 							<p class="text-xs text-base-content/60">Video Game Database</p>
