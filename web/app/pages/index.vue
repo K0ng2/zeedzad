@@ -72,23 +72,29 @@
 
 						<!-- Game Info or Match Button -->
 						<div class="mt-2">
-							<div
-								v-if="video.game"
-								class="flex items-center gap-2"
-							>
-								<font-awesome-icon
-									icon="gamepad"
-									class="w-4 h-4 opacity-70"
-								/>
-								<span class="text-sm font-semibold">{{ video.game.name }}</span>
-								<a
-									v-if="video.game.url"
-									:href="video.game.url"
-									target="_blank"
-									class="text-xs text-primary hover:underline"
+							<div v-if="video.game">
+								<div class="flex items-center gap-2 mb-2">
+									<font-awesome-icon
+										icon="gamepad"
+										class="w-4 h-4 opacity-70"
+									/>
+									<span class="text-sm font-semibold">{{ video.game.name }}</span>
+									<a
+										v-if="video.game.url"
+										:href="video.game.url"
+										target="_blank"
+										class="text-xs text-primary hover:underline"
+									>
+										IGDB →
+									</a>
+								</div>
+								<button
+									class="btn btn-outline btn-xs w-full"
+									@click="openGameModal(video)"
 								>
-									IGDB →
-								</a>
+									<font-awesome-icon icon="pen" />
+									Change Game
+								</button>
 							</div>
 							<button
 								v-else
@@ -103,7 +109,7 @@
 						<!-- YouTube Link -->
 						<div class="card-actions justify-end mt-2">
 							<a
-								:href="`https://www.youtube.com/watch?v=${video.youtube_id}`"
+								:href="`https://www.youtube.com/watch?v=${video.id}`"
 								target="_blank"
 								rel="noopener noreferrer"
 								class="btn btn-sm btn-ghost"

@@ -7,7 +7,8 @@ import {
 	faChevronLeft,
 	faChevronRight,
 	faExclamationCircle,
-	faSpinner
+	faSpinner,
+	faPen
 } from "@fortawesome/free-solid-svg-icons";
 
 import { faYoutube } from "@fortawesome/free-brands-svg-icons";
@@ -20,6 +21,7 @@ const icons = [
 	faChevronRight,
 	faExclamationCircle,
 	faSpinner,
+	faPen,
 	faYoutube
 ];
 

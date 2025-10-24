@@ -1,12 +1,8 @@
 export interface Video {
 	id: string
-	youtube_id: string
 	title: string
-	description?: string
 	thumbnail?: string
 	published_at: string
-	channel_id: string
-	channel_title?: string
 	game?: Game
 	created_at: string
 	updated_at: string

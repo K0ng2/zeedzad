@@ -8,7 +8,5 @@
 		<!-- Global Toast Notifications -->
 		<Toast />
 
-		<!-- Global Scroll to Top Button -->
-		<ScrollToTop />
 	</main>
 </template>
