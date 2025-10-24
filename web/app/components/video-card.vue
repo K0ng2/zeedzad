@@ -1,16 +1,23 @@
 <template>
 	<div class="card bg-base-100 shadow-lg card-hover overflow-hidden border border-base-300">
 		<!-- Thumbnail with Overlay -->
-		<figure class="relative group overflow-hidden">
+		<figure class="relative group overflow-hidden cursor-pointer">
 			<img
 				:src="video.thumbnail || '/placeholder.jpg'"
 				:alt="video.title"
-				class="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-110"
+				class="w-full aspect-video object-cover transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-75 group-hover:opacity-80"
 			/>
 			<!-- Gradient Overlay on Hover -->
 			<div
-				class="absolute inset-0 bg-linear-to-t from-base-300/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+				class="absolute inset-0 bg-linear-to-t from-base-300/90 via-base-300/30 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500"
 			></div>
+
+			<!-- Play Icon Pulse Animation -->
+			<div
+				class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+			>
+				<div class="absolute w-20 h-20 bg-primary/30 rounded-full animate-ping"></div>
+			</div>
 
 			<!-- Date Badge -->
 			<div class="absolute top-3 right-3 badge badge-neutral badge-sm shadow-lg">
@@ -26,9 +33,11 @@
 				:href="`https://www.youtube.com/watch?v=${video.id}`"
 				target="_blank"
 				rel="noopener noreferrer"
-				class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+				class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10"
 			>
-				<div class="btn btn-circle btn-lg btn-primary shadow-2xl">
+				<div
+					class="btn btn-circle btn-lg btn-primary shadow-2xl transform scale-90 group-hover:scale-100 transition-transform duration-300"
+				>
 					<font-awesome-icon
 						:icon="['fab', 'youtube']"
 						class="w-6 h-6"
