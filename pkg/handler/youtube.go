@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -119,6 +120,7 @@ func (h *Handler) SyncYouTubeVideos(c fiber.Ctx) error {
 
 			err = h.repo.CreateVideo(ctx, video)
 			if err != nil {
+				fmt.Printf("failed to insert video %s: %v\n", videoID, err)
 				errors++
 				continue
 			}
