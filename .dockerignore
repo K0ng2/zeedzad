@@ -49,18 +49,18 @@ go.work
 go.work.sum
 
 # Frontend dependencies and build artifacts
-nuxt/node_modules/
-nuxt/.nuxt/
-nuxt/.output/
-nuxt/dist/
-nuxt/build/
-nuxt/.turbo/
-nuxt/.parcel-cache/
-nuxt/.cache/
-nuxt/coverage/
-nuxt/yarn.lock
-nuxt/package-lock.json
-nuxt/pnpm-lock.yaml
+web/node_modules/
+web/.nuxt/
+web/.output/
+web/dist/
+web/build/
+web/.turbo/
+web/.parcel-cache/
+web/.cache/
+web/coverage/
+web/yarn.lock
+web/package-lock.json
+web/pnpm-lock.yaml
 
 # Lock files (keep only bun.lockb for this project)
 package-lock.json
