@@ -2,7 +2,7 @@
 	<div class="container mx-auto px-4 py-8">
 		<div class="mb-8">
 			<h1 class="text-4xl font-bold mb-4">OPZTV Videos</h1>
-			<p class="text-lg opacity-70 mb-6">Match YouTube videos with Steam games</p>
+			<p class="text-lg opacity-70 mb-6">Match YouTube videos with games from IGDB</p>
 
 			<!-- Search Bar -->
 			<div class="form-control">
@@ -76,13 +76,19 @@
 								v-if="video.game"
 								class="flex items-center gap-2"
 							>
-								<img
-									v-if="video.game.icon"
-									:src="video.game.icon"
-									:alt="video.game.name"
-									class="w-8 h-8 rounded"
+								<font-awesome-icon
+									icon="gamepad"
+									class="w-4 h-4 opacity-70"
 								/>
 								<span class="text-sm font-semibold">{{ video.game.name }}</span>
+								<a
+									v-if="video.game.url"
+									:href="video.game.url"
+									target="_blank"
+									class="text-xs text-primary hover:underline"
+								>
+									IGDB →
+								</a>
 							</div>
 							<button
 								v-else

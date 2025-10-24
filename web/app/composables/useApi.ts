@@ -13,11 +13,9 @@ export interface Video {
 }
 
 export interface Game {
-	id: string
-	app_id: string
+	id: number
 	name: string
-	icon?: string
-	logo?: string
+	url?: string
 }
 
 export interface GameResponse extends Game {
@@ -25,11 +23,10 @@ export interface GameResponse extends Game {
 	updated_at: string
 }
 
-export interface SteamAppSearchResult {
-	appid: string
+export interface IGDBGameSearchResult {
+	id: number
 	name: string
-	icon: string
-	logo: string
+	url: string
 }
 
 export interface Meta {
@@ -100,12 +97,12 @@ export function useApi() {
 			return fetchAPI<APIResponse<GameResponse>>(`/games/${id}`)
 		},
 
-		async searchSteamGames(query: string) {
+		async searchIGDBGames(query: string) {
 			const params = new URLSearchParams({ q: query })
-			return fetchAPI<APIResponse<SteamAppSearchResult[]>>(`/games/steam/search?${params}`)
+			return fetchAPI<APIResponse<IGDBGameSearchResult[]>>(`/games/igdb/search?${params}`)
 		},
 
-		async createGame(game: { app_id: string; name: string; icon?: string; logo?: string }) {
+		async createGame(game: { id: number; name: string; url?: string }) {
 			return fetchAPI<APIResponse<GameResponse>>('/games', {
 				method: 'POST',
 				body: JSON.stringify(game),
