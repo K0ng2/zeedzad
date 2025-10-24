@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-jet/jet/v2/sqlite"
-	"github.com/google/uuid"
 
 	"github.com/K0ng2/zeedzad/model"
 	repoModel "github.com/K0ng2/zeedzad/repository/model"
@@ -39,10 +38,10 @@ func (r *Repository) GetGames(ctx context.Context, query model.Offset, search st
 	return convertToGameResponses(games), nil
 }
 
-func (r *Repository) GetGameByID(ctx context.Context, id uuid.UUID) (*model.GameResponse, error) {
+func (r *Repository) GetGameByID(ctx context.Context, id int64) (*model.GameResponse, error) {
 	var game repoModel.Games
 
-	stmt := selectGames().WHERE(Games.ID.EQ(sqlite.String(id.String())))
+	stmt := selectGames().WHERE(Games.ID.EQ(sqlite.Int(id)))
 
 	err := stmt.QueryContext(ctx, r.ex, &game)
 	if err != nil {
@@ -69,44 +68,33 @@ func (r *Repository) GetGameTotalItems(ctx context.Context, search string) (int6
 	return TotalItems(ctx, r.ex, Games.ID, Games, expression)
 }
 
-func (r *Repository) CreateGame(ctx context.Context, req model.CreateGameRequest) (string, error) {
-	id := uuid.New().String()
+func (r *Repository) CreateGame(ctx context.Context, req model.CreateGameRequest) (int64, error) {
+	var iconValue sqlite.Expression = sqlite.NULL
+	if req.Icon != nil {
+		iconValue = sqlite.String(*req.Icon)
+	}
 
-	stmt := Games.INSERT(Games.ID, Games.AppID, Games.Name, Games.Icon, Games.Logo, Games.CreatedAt, Games.UpdatedAt).
+	var logoValue sqlite.Expression = sqlite.NULL
+	if req.Logo != nil {
+		logoValue = sqlite.String(*req.Logo)
+	}
+
+	stmt := Games.INSERT(Games.ID, Games.Name, Games.Icon, Games.Logo, Games.CreatedAt, Games.UpdatedAt).
 		VALUES(
-			id,
-			req.AppID,
+			req.ID,
 			req.Name,
-			req.Icon,
-			req.Logo,
+			iconValue,
+			logoValue,
 			time.Now(),
 			time.Now(),
 		)
 
 	_, err := stmt.ExecContext(ctx, r.ex)
 	if err != nil {
-		return "", FormatError("create game", err)
+		return 0, FormatError("create game", err)
 	}
 
-	return id, nil
-}
-
-func (r *Repository) SearchGamesByAppID(ctx context.Context, appID string) (*model.GameResponse, error) {
-	var game repoModel.Games
-
-	stmt := selectGames().WHERE(Games.AppID.EQ(sqlite.String(appID)))
-
-	err := stmt.QueryContext(ctx, r.ex, &game)
-	if err != nil {
-		return nil, FormatError("search game by app id", err)
-	}
-
-	responses := convertToGameResponses([]repoModel.Games{game})
-	if len(responses) == 0 {
-		return nil, nil
-	}
-
-	return &responses[0], nil
+	return req.ID, nil
 }
 
 func convertToGameResponses(games []repoModel.Games) []model.GameResponse {
@@ -119,7 +107,6 @@ func convertToGameResponses(games []repoModel.Games) []model.GameResponse {
 
 		responses = append(responses, model.GameResponse{
 			ID:        *g.ID,
-			AppID:     g.AppID,
 			Name:      g.Name,
 			Icon:      g.Icon,
 			Logo:      g.Logo,

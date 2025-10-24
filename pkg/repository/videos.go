@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-jet/jet/v2/sqlite"
-	"github.com/google/uuid"
 
 	"github.com/K0ng2/zeedzad/model"
 	repoModel "github.com/K0ng2/zeedzad/repository/model"
@@ -21,7 +20,6 @@ func selectVideos() sqlite.SelectStatement {
 	return sqlite.SELECT(
 		Videos.AllColumns,
 		Games.ID.AS("game.id"),
-		Games.AppID.AS("game.app_id"),
 		Games.Name.AS("game.name"),
 		Games.Icon.AS("game.icon"),
 		Games.Logo.AS("game.logo"),
@@ -58,10 +56,10 @@ func (r *Repository) GetVideos(ctx context.Context, query model.Offset, search s
 	return convertToVideoResponses(videos), nil
 }
 
-func (r *Repository) GetVideoByID(ctx context.Context, id uuid.UUID) (*model.VideoResponse, error) {
+func (r *Repository) GetVideoByID(ctx context.Context, id string) (*model.VideoResponse, error) {
 	var video VideoWithGame
 
-	stmt := selectVideos().WHERE(Videos.ID.EQ(sqlite.String(id.String())))
+	stmt := selectVideos().WHERE(Videos.ID.EQ(sqlite.String(id)))
 
 	err := stmt.QueryContext(ctx, r.ex, &video)
 	if err != nil {
@@ -88,13 +86,13 @@ func (r *Repository) GetVideoTotalItems(ctx context.Context, search string) (int
 	return TotalItems(ctx, r.ex, Videos.ID, Videos, expression)
 }
 
-func (r *Repository) UpdateVideoGame(ctx context.Context, videoID, gameID uuid.UUID) error {
+func (r *Repository) UpdateVideoGame(ctx context.Context, videoID string, gameID int64) error {
 	stmt := Videos.UPDATE(Videos.GameID, Videos.UpdatedAt).
 		SET(
-			sqlite.String(gameID.String()),
+			sqlite.Int(gameID),
 			sqlite.CURRENT_TIMESTAMP(),
 		).
-		WHERE(Videos.ID.EQ(sqlite.String(videoID.String())))
+		WHERE(Videos.ID.EQ(sqlite.String(videoID)))
 
 	_, err := stmt.ExecContext(ctx, r.ex)
 	if err != nil {
@@ -105,16 +103,12 @@ func (r *Repository) UpdateVideoGame(ctx context.Context, videoID, gameID uuid.U
 }
 
 func (r *Repository) CreateVideo(ctx context.Context, video repoModel.Videos) error {
-	stmt := Videos.INSERT(Videos.ID, Videos.YoutubeID, Videos.Title, Videos.Description, Videos.Thumbnail, Videos.PublishedAt, Videos.ChannelID, Videos.ChannelTitle, Videos.GameID, Videos.CreatedAt, Videos.UpdatedAt).
+	stmt := Videos.INSERT(Videos.ID, Videos.Title, Videos.Thumbnail, Videos.PublishedAt, Videos.GameID, Videos.CreatedAt, Videos.UpdatedAt).
 		VALUES(
 			video.ID,
-			video.YoutubeID,
 			video.Title,
-			video.Description,
 			video.Thumbnail,
 			video.PublishedAt,
-			video.ChannelID,
-			video.ChannelTitle,
 			video.GameID,
 			time.Now(),
 			time.Now(),
@@ -131,7 +125,7 @@ func (r *Repository) CreateVideo(ctx context.Context, video repoModel.Videos) er
 func (r *Repository) GetVideoByYouTubeID(ctx context.Context, youtubeID string) (*model.VideoResponse, error) {
 	var video VideoWithGame
 
-	stmt := selectVideos().WHERE(Videos.YoutubeID.EQ(sqlite.String(youtubeID)))
+	stmt := selectVideos().WHERE(Videos.ID.EQ(sqlite.String(youtubeID)))
 
 	err := stmt.QueryContext(ctx, r.ex, &video)
 	if err != nil {
@@ -151,25 +145,20 @@ func convertToVideoResponses(videos []VideoWithGame) []model.VideoResponse {
 
 	for _, v := range videos {
 		response := model.VideoResponse{
-			ID:           *v.ID,
-			YoutubeID:    v.YoutubeID,
-			Title:        v.Title,
-			Description:  v.Description,
-			Thumbnail:    v.Thumbnail,
-			PublishedAt:  v.PublishedAt,
-			ChannelID:    v.ChannelID,
-			ChannelTitle: v.ChannelTitle,
-			CreatedAt:    v.CreatedAt,
-			UpdatedAt:    v.UpdatedAt,
+			ID:          *v.ID,
+			Title:       v.Title,
+			Thumbnail:   v.Thumbnail,
+			PublishedAt: v.PublishedAt,
+			CreatedAt:   v.CreatedAt,
+			UpdatedAt:   v.UpdatedAt,
 		}
 
 		if v.Game != nil && v.Game.ID != nil {
 			response.Game = &model.GameInfo{
-				ID:    *v.Game.ID,
-				AppID: v.Game.AppID,
-				Name:  v.Game.Name,
-				Icon:  v.Game.Icon,
-				Logo:  v.Game.Logo,
+				ID:   *v.Game.ID,
+				Name: v.Game.Name,
+				Icon: v.Game.Icon,
+				Logo: v.Game.Logo,
 			}
 		}
 

@@ -8,9 +8,9 @@ import (
 	"net/url"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 
 	"github.com/K0ng2/zeedzad/model"
+	"github.com/K0ng2/zeedzad/utils"
 )
 
 // GetGames godoc
@@ -61,7 +61,7 @@ func (h *Handler) GetGames(c fiber.Ctx) error {
 // @Tags games
 // @Accept  json
 // @Produce  json
-// @Param id path string true "Game ID"
+// @Param id path int true "Game ID"
 // @Success 200 {object} model.APIResponse[model.GameResponse]
 // @Failure 400 {object} model.Error
 // @Failure 500 {object} model.Error
@@ -69,7 +69,7 @@ func (h *Handler) GetGames(c fiber.Ctx) error {
 func (h *Handler) GetGameByID(c fiber.Ctx) error {
 	ctx := c.RequestCtx()
 
-	id, err := fiber.Convert(c.Params("id"), uuid.Parse)
+	id, err := fiber.Convert(c.Params("id"), utils.Atoi64)
 	if err != nil {
 		return c.Status(http.StatusBadRequest).JSON(ErrInvalidPathParams)
 	}
@@ -140,13 +140,9 @@ func (h *Handler) CreateGame(c fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(ErrInvalidRequestBody)
 	}
 
-	// Check if game with same appID already exists
-	existingGame, err := h.repo.SearchGamesByAppID(ctx, requestBody.AppID)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: err.Error()})
-	}
-
-	if existingGame != nil {
+	// Check if game with same ID already exists
+	existingGame, err := h.repo.GetGameByID(ctx, requestBody.ID)
+	if err == nil && existingGame != nil {
 		return c.JSON(Response(existingGame, nil))
 	}
 
@@ -156,8 +152,7 @@ func (h *Handler) CreateGame(c fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: err.Error()})
 	}
 
-	gameID, _ := uuid.Parse(id)
-	game, err := h.repo.GetGameByID(ctx, gameID)
+	game, err := h.repo.GetGameByID(ctx, id)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: err.Error()})
 	}

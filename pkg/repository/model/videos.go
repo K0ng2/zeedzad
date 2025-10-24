@@ -12,15 +12,11 @@ import (
 )
 
 type Videos struct {
-	ID           *string   `sql:"primary_key" json:"id"`
-	YoutubeID    string    `json:"youtube_id"`
-	Title        string    `json:"title"`
-	Description  *string   `json:"description"`
-	Thumbnail    *string   `json:"thumbnail"`
-	PublishedAt  time.Time `json:"published_at"`
-	ChannelID    string    `json:"channel_id"`
-	ChannelTitle *string   `json:"channel_title"`
-	GameID       *string   `json:"game_id"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID          *string   `sql:"primary_key" json:"id"`
+	Title       string    `json:"title"`
+	Thumbnail   *string   `json:"thumbnail"`
+	PublishedAt time.Time `json:"published_at"`
+	GameID      *int32    `json:"game_id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
