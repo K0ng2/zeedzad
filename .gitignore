@@ -3,3 +3,4 @@ db.sqlite
 mise.local.toml
 pkg/dist/app
 zerver.env
+.env
