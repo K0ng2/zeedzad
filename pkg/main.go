@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/robfig/cron/v3"
+
 	"github.com/K0ng2/zeedzad/config"
 	"github.com/K0ng2/zeedzad/db"
 	"github.com/K0ng2/zeedzad/handler"
@@ -39,6 +41,24 @@ func main() {
 	fmt.Printf("  CLOUDFLARE_API_TOKEN: %s\n", maskToken(config.CLOUDFLARE_API_TOKEN))
 	fmt.Printf("  YOUTUBE_API_KEY: %s\n", config.YOUTUBE_API_KEY)
 	fmt.Printf("  IGDB_CLIENT_ID: %s\n", config.IGDB_CLIENT_ID)
+	fmt.Printf("  SCHEDULE_CRON: %s\n", config.SCHEDULE_CRON)
+
+	// Setup cron scheduler for YouTube video sync
+	if config.SCHEDULE_CRON != "" {
+		cr := cron.New()
+		_, err := cr.AddFunc(config.SCHEDULE_CRON, func() {
+			fmt.Println("Running scheduled YouTube video sync...")
+			handler.SyncYouTubeVideosScheduled()
+		})
+		if err != nil {
+			log.Printf("Failed to add cron job: %v", err)
+		} else {
+			cr.Start()
+			fmt.Printf("YouTube sync cron job scheduled: %s\n", config.SCHEDULE_CRON)
+		}
+	} else {
+		fmt.Println("SCHEDULE_CRON not set, skipping scheduled YouTube sync")
+	}
 
 	// Setup and start the router
 	r := server.NewRouter(handler)

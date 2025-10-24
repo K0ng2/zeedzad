@@ -11,4 +11,5 @@ var (
 	YOUTUBE_API_KEY      = os.Getenv("YOUTUBE_API_KEY")
 	IGDB_CLIENT_ID       = os.Getenv("IGDB_CLIENT_ID")
 	IGDB_CLIENT_SECRET   = os.Getenv("IGDB_CLIENT_SECRET")
+	SCHEDULE_CRON        = os.Getenv("SCHEDULE_CRON")
 )
