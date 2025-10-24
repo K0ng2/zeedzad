@@ -47,7 +47,7 @@ func NewRouter(handler *handler.Handler) *fiber.App {
 	api.Get("/games", handler.GetGames)
 	api.Get("/games/:id", handler.GetGameByID)
 	api.Post("/games", handler.CreateGame)
-	api.Get("/games/steam/search", handler.SearchSteamGames)
+	api.Get("/games/igdb/search", handler.SearchIGDBGames)
 
 	fSys, err := fs.Sub(web.EmbeddedFiles, "public")
 	if err != nil {

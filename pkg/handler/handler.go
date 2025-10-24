@@ -7,17 +7,20 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"github.com/K0ng2/zeedzad/db"
+	"github.com/K0ng2/zeedzad/igdb"
 	"github.com/K0ng2/zeedzad/model"
 	"github.com/K0ng2/zeedzad/repository"
 )
 
 type Handler struct {
 	repo *repository.Repository
+	igdb *igdb.Client
 }
 
-func NewHandler(db *db.Database) *Handler {
+func NewHandler(db *db.Database, igdbClient *igdb.Client) *Handler {
 	return &Handler{
 		repo: repository.NewRepository(db),
+		igdb: igdbClient,
 	}
 }
 

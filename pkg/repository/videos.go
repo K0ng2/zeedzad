@@ -21,8 +21,7 @@ func selectVideos() sqlite.SelectStatement {
 		Videos.AllColumns,
 		Games.ID.AS("game.id"),
 		Games.Name.AS("game.name"),
-		Games.Icon.AS("game.icon"),
-		Games.Logo.AS("game.logo"),
+		Games.URL.AS("game.url"),
 	).FROM(
 		Videos.LEFT_JOIN(Games, Games.ID.EQ(Videos.GameID)),
 	)
@@ -157,8 +156,7 @@ func convertToVideoResponses(videos []VideoWithGame) []model.VideoResponse {
 			response.Game = &model.GameInfo{
 				ID:   *v.Game.ID,
 				Name: v.Game.Name,
-				Icon: v.Game.Icon,
-				Logo: v.Game.Logo,
+				URL:  &v.Game.URL,
 			}
 		}
 

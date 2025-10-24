@@ -47,8 +47,7 @@ type VideoResponse struct {
 type GameInfo struct {
 	ID   int32   `json:"id"`
 	Name string  `json:"name"`
-	Icon *string `json:"icon"`
-	Logo *string `json:"logo"`
+	URL  *string `json:"url"`
 }
 
 type UpdateVideoGameRequest struct {
@@ -59,8 +58,7 @@ type UpdateVideoGameRequest struct {
 type GameResponse struct {
 	ID        int32     `json:"id"`
 	Name      string    `json:"name"`
-	Icon      *string   `json:"icon"`
-	Logo      *string   `json:"logo"`
+	URL       *string   `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
@@ -68,16 +66,14 @@ type GameResponse struct {
 type CreateGameRequest struct {
 	ID   int64   `json:"id"`
 	Name string  `json:"name"`
-	Icon *string `json:"icon"`
-	Logo *string `json:"logo"`
+	URL  *string `json:"url"`
 }
 
-// Steam API response
-type SteamAppSearchResult struct {
-	AppID string `json:"appid"`
-	Name  string `json:"name"`
-	Icon  string `json:"icon"`
-	Logo  string `json:"logo"`
+// IGDB API response
+type IGDBGameSearchResult struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 // Sync result
