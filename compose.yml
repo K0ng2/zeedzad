@@ -1,18 +1,16 @@
 services:
   server:
-    container_name: db-server
+    container_name: zeedzad
     user: ${UID}:${GID}
-    ports:
-      - 8088:8088
+    expose:
+      - 8088
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      postgres:
-        condition: service_healthy
     restart: always
-      - ${API_DATA}:/app/data
     mem_limit: 256m
+    env_file:
+      - zerver.env
     networks:
       - internal
       - public

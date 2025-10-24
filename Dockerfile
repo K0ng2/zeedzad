@@ -21,7 +21,7 @@ WORKDIR /app
 
 # Copy node_modules from frontend-deps
 COPY --from=frontend-deps /app/node_modules ./node_modules
-COPY --from=frontend-deps /app/package.json /app/bun.lockb ./
+COPY --from=frontend-deps /app/package.json /app/bun.lock ./
 
 # Copy the web source code
 COPY web/ ./
