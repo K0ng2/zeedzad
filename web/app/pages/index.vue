@@ -39,6 +39,18 @@
 								/>
 								<span class="hidden md:inline">Search</span>
 							</button>
+							<button
+								v-if="searchQuery"
+								class="btn btn-outline btn-lg px-6 shadow-lg hover:shadow-xl"
+								@click="clearSearch"
+								title="Clear search"
+							>
+								<font-awesome-icon
+									icon="times"
+									class="md:mr-2"
+								/>
+								<span class="hidden md:inline">Clear</span>
+							</button>
 						</div>
 					</div>
 
@@ -205,6 +217,12 @@ async function fetchVideos() {
 }
 
 function search() {
+	currentPage.value = 1
+	fetchVideos()
+}
+
+function clearSearch() {
+	searchQuery.value = ''
 	currentPage.value = 1
 	fetchVideos()
 }
