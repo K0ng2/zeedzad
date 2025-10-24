@@ -16,15 +16,31 @@ type VideoWithGame struct {
 	Game *repoModel.Games `alias:"game"`
 }
 
+func searchTable() sqlite.ReadableTable {
+	return Videos.LEFT_JOIN(Games, Games.ID.EQ(Videos.GameID))
+}
+
 func selectVideos() sqlite.SelectStatement {
 	return sqlite.SELECT(
 		Videos.AllColumns,
 		Games.ID.AS("game.id"),
 		Games.Name.AS("game.name"),
 		Games.URL.AS("game.url"),
-	).FROM(
-		Videos.LEFT_JOIN(Games, Games.ID.EQ(Videos.GameID)),
+	).FROM(searchTable())
+}
+
+func searchExpression(search string) *sqlite.BoolExpression {
+	if search == "" {
+		return nil
+	}
+
+	searchPattern := sqlite.String("%" + search + "%")
+	exp := sqlite.OR(
+		Videos.Title.LIKE(searchPattern),
+		Games.Name.LIKE(searchPattern),
 	)
+
+	return &exp
 }
 
 func (r *Repository) GetVideos(ctx context.Context, query model.Offset, search string) ([]model.VideoResponse, error) {
@@ -33,12 +49,8 @@ func (r *Repository) GetVideos(ctx context.Context, query model.Offset, search s
 	stmt := selectVideos()
 
 	if search != "" {
-		searchPattern := sqlite.String("%" + search + "%")
 		stmt = stmt.WHERE(
-			sqlite.OR(
-				Videos.Title.LIKE(searchPattern),
-				Games.Name.LIKE(searchPattern),
-			),
+			*searchExpression(search),
 		)
 	}
 
@@ -74,15 +86,9 @@ func (r *Repository) GetVideoByID(ctx context.Context, id string) (*model.VideoR
 }
 
 func (r *Repository) GetVideoTotalItems(ctx context.Context, search string) (int64, error) {
-	var expression *sqlite.BoolExpression
+	expression := searchExpression(search)
 
-	if search != "" {
-		searchPattern := sqlite.String("%" + search + "%")
-		exp := Videos.Title.LIKE(searchPattern)
-		expression = &exp
-	}
-
-	return TotalItems(ctx, r.ex, Videos.ID, Videos, expression)
+	return TotalItems(ctx, r.ex, Videos.ID, searchTable(), expression)
 }
 
 func (r *Repository) UpdateVideoGame(ctx context.Context, videoID string, gameID int64) error {
