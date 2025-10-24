@@ -1,100 +1,150 @@
 <template>
-	<div class="container mx-auto px-4 py-8">
-		<div class="mb-8">
-			<h1 class="text-4xl font-bold mb-4">OPZTV Videos</h1>
-			<p class="text-lg opacity-70 mb-6">Match YouTube videos with games from IGDB</p>
-
-			<!-- Search Bar -->
-			<div class="form-control">
-				<div class="input-group">
-					<input
-						v-model="searchQuery"
-						type="text"
-						placeholder="Search by video title or game name..."
-						class="input input-bordered w-full"
-						@keyup.enter="search"
-					/>
-					<button
-						class="btn btn-primary"
-						@click="search"
+	<div class="min-h-screen">
+		<!-- Hero Section with Gradient -->
+		<div class="gradient-hero border-b border-base-300">
+			<div class="container mx-auto px-4 py-12 md:py-16">
+				<div class="max-w-4xl mx-auto text-center mb-8">
+					<h1
+						class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
 					>
-						<font-awesome-icon icon="search" />
+						OPZTV Videos
+					</h1>
+					<p class="text-lg md:text-xl text-base-content/70 mb-8">
+						Discover and match YouTube videos with games from IGDB
+					</p>
+
+					<!-- Modern Search Bar -->
+					<div class="relative max-w-2xl mx-auto">
+						<div class="relative flex items-center gap-2">
+							<div class="relative flex-1">
+								<font-awesome-icon
+									icon="search"
+									class="absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 w-5 h-5"
+								/>
+								<input
+									v-model="searchQuery"
+									type="text"
+									placeholder="Search by video title or game name..."
+									class="input input-lg input-bordered w-full pl-12 pr-4 shadow-lg focus:shadow-xl transition-shadow"
+									@keyup.enter="search"
+								/>
+							</div>
+							<button
+								class="btn btn-primary btn-lg px-8 shadow-lg hover:shadow-xl"
+								@click="search"
+							>
+								<font-awesome-icon
+									icon="search"
+									class="md:mr-2"
+								/>
+								<span class="hidden md:inline">Search</span>
+							</button>
+						</div>
+					</div>
+
+					<!-- Stats Bar -->
+					<div class="flex justify-center gap-6 mt-8 text-sm">
+						<div class="flex items-center gap-2">
+							<div class="badge badge-primary badge-lg">
+								<font-awesome-icon
+									icon="video"
+									class="mr-2"
+								/>
+								{{ meta?.total || 0 }} Videos
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Main Content -->
+		<div class="container mx-auto px-4 py-8">
+
+			<!-- Loading State -->
+			<div
+				v-if="loading"
+				class="flex flex-col items-center justify-center py-24"
+			>
+				<span class="loading loading-spinner loading-lg text-primary mb-4"></span>
+				<p class="text-base-content/60">Loading videos...</p>
+			</div>
+
+			<!-- Error State -->
+			<div
+				v-else-if="error"
+				class="alert alert-error shadow-lg max-w-2xl mx-auto"
+			>
+				<font-awesome-icon
+					icon="exclamation-circle"
+					class="w-6 h-6"
+				/>
+				<span>{{ error }}</span>
+			</div>
+
+			<!-- Video Grid -->
+			<div v-else-if="videos.length > 0">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 mb-12">
+					<video-card
+						v-for="video in videos"
+						:key="video.id"
+						:video="video"
+						@open-game-modal="openGameModal"
+						@game-removed="refreshVideos"
+					/>
+				</div>
+
+				<!-- Modern Pagination -->
+				<div class="flex flex-col sm:flex-row justify-center items-center gap-4 py-8 border-t border-base-300">
+					<button
+						class="btn btn-outline btn-sm sm:btn-md gap-2"
+						:disabled="currentPage === 1"
+						@click="goToPage(currentPage - 1)"
+					>
+						<font-awesome-icon
+							icon="chevron-left"
+							class="w-4 h-4"
+						/>
+						<span class="hidden sm:inline">Previous</span>
+					</button>
+
+					<div class="flex items-center gap-3">
+						<div class="badge badge-lg badge-ghost">
+							Page {{ currentPage }} of {{ totalPages }}
+						</div>
+						<div class="badge badge-primary badge-outline">
+							{{ meta?.total || 0 }} videos
+						</div>
+					</div>
+
+					<button
+						class="btn btn-outline btn-sm sm:btn-md gap-2"
+						:disabled="currentPage >= totalPages"
+						@click="goToPage(currentPage + 1)"
+					>
+						<span class="hidden sm:inline">Next</span>
+						<font-awesome-icon
+							icon="chevron-right"
+							class="w-4 h-4"
+						/>
 					</button>
 				</div>
 			</div>
-		</div>
 
-		<!-- Loading State -->
-		<div
-			v-if="loading"
-			class="flex justify-center py-16"
-		>
-			<span class="loading loading-spinner loading-lg"></span>
-		</div>
-
-		<!-- Error State -->
-		<div
-			v-else-if="error"
-			class="alert alert-error"
-		>
-			<font-awesome-icon icon="exclamation-circle" />
-			<span>{{ error }}</span>
-		</div>
-
-		<!-- Video Grid -->
-		<div v-else-if="videos.length > 0">
-			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-				<video-card
-					v-for="video in videos"
-					:key="video.id"
-					:video="video"
-					@open-game-modal="openGameModal"
-					@game-removed="refreshVideos"
-				/>
-			</div>
-
-			<!-- Pagination -->
-			<div class="flex justify-center items-center gap-4">
-				<button
-					class="btn btn-outline"
-					:disabled="currentPage === 1"
-					@click="goToPage(currentPage - 1)"
-				>
-					<font-awesome-icon icon="chevron-left" />
-					Previous
-				</button>
-
-				<div class="flex items-center gap-2">
-					<span class="text-sm">
-						Page {{ currentPage }} of {{ totalPages }}
-					</span>
-					<span class="text-sm opacity-70">
-						({{ meta?.total || 0 }} total videos)
-					</span>
+			<!-- Empty State -->
+			<div
+				v-else
+				class="flex flex-col items-center justify-center py-24"
+			>
+				<div class="bg-base-200 rounded-full p-8 mb-6">
+					<font-awesome-icon
+						icon="video"
+						class="w-16 h-16 text-base-content/30"
+					/>
 				</div>
-
-				<button
-					class="btn btn-outline"
-					:disabled="currentPage >= totalPages"
-					@click="goToPage(currentPage + 1)"
-				>
-					Next
-					<font-awesome-icon icon="chevron-right" />
-				</button>
+				<h3 class="text-2xl font-semibold mb-2">No videos found</h3>
+				<p class="text-base-content/60">Try adjusting your search criteria</p>
 			</div>
-		</div>
-
-		<!-- Empty State -->
-		<div
-			v-else
-			class="py-16 text-center opacity-70"
-		>
-			<font-awesome-icon
-				icon="video"
-				size="3x"
-				class="mb-4"
-			/>
-			<p class="text-xl">No videos found</p>
 		</div>
 
 		<!-- Game Search Modal -->
