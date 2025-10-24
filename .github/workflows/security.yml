@@ -105,17 +105,11 @@ jobs:
           languages: ${{ matrix.language }}
           queries: security-and-quality
 
-      - name: Set up Go (for Go analysis)
-        if: matrix.language == 'go'
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.25'
-          cache-dependency-path: pkg/go.sum
+      # CodeQL sets up its own Go toolchain, so we don't use setup-go here
+      # The autobuild step will handle building Go code automatically
 
-      - name: Build Go code
-        if: matrix.language == 'go'
-        working-directory: pkg
-        run: go build -v ./...
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
