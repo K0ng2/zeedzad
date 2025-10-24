@@ -1,62 +1,45 @@
-# Go-Jet Model Generation Instructions
+# Go-Jet Model Generation
 
-## Prerequisites
+This project keeps an SQL schema at `pkg/db/schema.sql`. Instead of requiring a live SQLite database for generation, you can generate Go-Jet models from the schema file directly (recommended).
 
-1. Ensure you have a SQLite database file created
-2. Apply the schema from `pkg/db/schema.sql` to your database
+## Generate models from schema file (recommended)
 
-## Generate Go-Jet Models
-
-Run the following command from the `pkg` directory:
+Run from the repository root or `pkg`:
 
 ```bash
-# Set your database path
-export SQLITE_PATH="/path/to/your/database.db"
+cd pkg
+# Generate Go-Jet tables/models using the schema file
+jet -dsn=file://db/schema.sql -path=./repository/table
+```
 
-# Apply the schema
+This places generated table and model files under `pkg/repository/table` which the codebase uses.
+
+## Optional: Local SQLite workflow
+
+If you prefer to generate models from a real SQLite DB (local testing), you can create a database and apply the schema:
+
+```bash
+mkdir -p data
+export SQLITE_PATH="$PWD/data/zeedzad.db"
 sqlite3 $SQLITE_PATH < db/schema.sql
 
-# Generate Go-Jet models
-jet -source=sqlite -dsn=$SQLITE_PATH -path=./gen
+# Then generate using the local DB
+jet -source=sqlite -dsn=$SQLITE_PATH -path=./repository/table
 ```
 
-This will generate type-safe Go models in `pkg/gen/` directory based on your database schema.
+## Expected structure
 
-## Expected Output Structure
+After generation you should have Go-Jet table and model files available under `pkg/repository/table` (or the path you supplied).
 
-After running the command, you should have:
+## Installing jet CLI
 
-```
-pkg/gen/
-  zeedzad/        # or your database name
-    public/
-      table/
-        games.go
-        videos.go
-      model/
-        games.go
-        videos.go
-```
-
-## Import in Your Code
-
-```go
-import (
-	"github.com/K0ng2/zeedzad/gen/zeedzad/public/table"
-	. "github.com/go-jet/jet/v2/sqlite"
-)
-
-// Use in queries
-var Games = table.Games
-var Videos = table.Videos
-```
-
-## Alternative: Manual Installation of jet CLI
-
-If `jet` command is not available:
+If `jet` is not installed:
 
 ```bash
 go install github.com/go-jet/jet/v2/cmd/jet@latest
 ```
 
-Then run the generation command above.
+## Notes
+
+- Use the `file://` schema approach when you're generating models in CI or on machines without a local SQLite binary.
+- Keep generated files out of git if you prefer (this repo keeps them under `pkg/repository/table`).

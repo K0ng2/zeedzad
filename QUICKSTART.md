@@ -1,152 +1,96 @@
-# Quick Start Guide
+# Quick Start (Cloudflare D1)
 
-This guide will help you get the Zeedzad app up and running quickly.
+This quick start assumes the repository is using Cloudflare D1 as the primary database. If you still need a local SQLite workflow for model generation, see `pkg/db/README.md`.
 
 ## Prerequisites
 
 - Go 1.25+
 - Bun (or npm/pnpm)
-- YouTube Data API Key ([Get one here](https://console.cloud.google.com/apis/credentials))
-- SQLite3 command-line tool
+- Cloudflare account with a D1 database
+- Cloudflare API token with D1 permissions
+- YouTube Data API Key
 
-## Step 1: Database Setup
+## 1. Configure environment variables
+
+Set the required env vars in your shell (or a local `.env`):
 
 ```bash
-# Create database directory
-mkdir -p data
-
-# Set environment variable
-export SQLITE_PATH="$PWD/data/zeedzad.db"
-
-# Initialize database
-sqlite3 $SQLITE_PATH < pkg/db/schema.sql
-
-# Verify tables were created
-sqlite3 $SQLITE_PATH ".tables"
-# Should show: games  videos
+export D1_ACCOUNT_ID="<your-account-id>"
+export D1_DATABASE_ID="<your-d1-database-id>"
+export CLOUDFLARE_API_TOKEN="<your-api-token>"
+export YOUTUBE_API_KEY="<your-youtube-key>"
+export IGDB_CLIENT_ID="<your-igdb-client-id>"
+export IGDB_CLIENT_SECRET="<your-igdb-client-secret>"
 ```
 
-## Step 2: Start Backend
+## 2. Generate Go-Jet models (if needed)
+
+If you modify the SQL schema and need generated Go-Jet models, generate them from the schema file:
 
 ```bash
 cd pkg
-
-# Install Go dependencies
-go mod download
-
-# Start the server
-go run main.go
-
-# Server will start on http://localhost:8088
+jet -dsn=file://db/schema.sql -path=./repository/table
 ```
 
-Keep this terminal running.
+This uses the schema file directly and does not require a local SQLite DB.
 
-## Step 3: Sync YouTube Videos
-
-In a new terminal:
+## 3. Start the backend
 
 ```bash
-# Set your YouTube API key
-export YOUTUBE_API_KEY="your_api_key_here"
+cd pkg
+go mod download
+go run main.go
+```
 
-# Run sync script
-./scripts/sync-youtube.sh
+The backend will listen on `:8088` by default.
 
-# Or manually:
+## 4. Sync YouTube videos
+
+With the backend running, sync videos from the OPZTV channel:
+
+```bash
 curl -X POST "http://localhost:8088/api/videos/sync?api_key=$YOUTUBE_API_KEY&max_results=50"
 ```
 
-This will fetch the latest 50 videos from the OPZTV YouTube channel.
+Or use the provided script (ensure `YOUTUBE_API_KEY` is exported):
 
-## Step 4: Start Frontend (Development)
+```bash
+./scripts/sync-youtube.sh
+```
 
-In another new terminal:
+## 5. Start the frontend (development)
 
 ```bash
 cd web
-
-# Install dependencies
 bun install
-
-# Start dev server
 bun dev
-
-# Frontend will start on http://localhost:3000
 ```
 
-## Step 5: Use the App
+Open `http://localhost:3000` in your browser.
 
-1. Open your browser to `http://localhost:3000`
-2. You should see a grid of video cards from OPZTV
-3. Click "Match Game" on any video
-4. Search for the game name
-5. Select the correct game from Steam results
-6. The video is now matched!
-
-## Troubleshooting
-
-### Backend won't start
-- Check that `SQLITE_PATH` is set: `echo $SQLITE_PATH`
-- Verify database exists: `ls -l $SQLITE_PATH`
-- Check if port 8088 is in use: `lsof -i :8088`
-
-### Frontend can't connect to API
-- Verify backend is running: `curl http://localhost:8088/`
-- Check browser console for errors
-- Ensure CORS is working (should be enabled by default)
-
-### No videos showing
-- Run the sync script to fetch videos
-- Check API response: `curl http://localhost:8088/api/videos`
-- Verify database has data: `sqlite3 $SQLITE_PATH "SELECT COUNT(*) FROM videos;"`
-
-### YouTube sync fails
-- Verify API key is valid
-- Check YouTube API quota limits
-- Ensure channel username "OPZTV" is correct
-
-## Next Steps
-
-- Browse the API documentation at `http://localhost:8088/api/swagger/`
-- Check the full README.md for production deployment
-- Customize the frontend styling in `web/app/assets/css/main.css`
-
-## Quick Commands Reference
+## Quick commands
 
 ```bash
-# Start backend
+# Backend
 cd pkg && go run main.go
 
-# Start frontend dev
+# Frontend dev
 cd web && bun dev
 
-# Sync videos
-YOUTUBE_API_KEY=xxx ./scripts/sync-youtube.sh
+# Generate models
+cd pkg && jet -dsn=file://db/schema.sql -path=./repository/table
 
 # Build for production
 cd web && bun run build
 cd pkg && go build -o zeedzad
-
-# Run production binary
-export SQLITE_PATH=/path/to/db
-./pkg/zeedzad
 ```
 
-## API Quick Test
+## Health & API checks
 
 ```bash
-# Health check
-curl http://localhost:8088/
-
-# Get videos
-curl http://localhost:8088/api/videos
-
-# Search games on Steam
-curl "http://localhost:8088/api/games/steam/search?q=team%20fortress%202"
-
-# Get database health
-curl http://localhost:8088/api/databasez
+curl http://localhost:8088/           # health
+curl http://localhost:8088/api/videos  # list videos
+curl http://localhost:8088/api/databasez # db health
 ```
 
-Enjoy using Zeedzad! 🎮📺
+If you require a local SQLite-only workflow (for offline model generation), see `pkg/db/README.md` for instructions.
