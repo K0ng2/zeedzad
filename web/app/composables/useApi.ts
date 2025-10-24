@@ -76,7 +76,7 @@ export function useApi() {
 			return fetchAPI<APIResponse<Video>>(`/videos/${id}`)
 		},
 
-		async updateVideoGame(videoId: string, gameId: string) {
+		async updateVideoGame(videoId: string, gameId: number) {
 			return fetchAPI<void>(`/videos/${videoId}/game`, {
 				method: 'PUT',
 				body: JSON.stringify({ game_id: gameId }),
