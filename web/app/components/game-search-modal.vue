@@ -38,11 +38,11 @@
 						type="text"
 						placeholder="Search IGDB games..."
 						class="input input-bordered w-full pl-12 pr-28 input-lg focus:outline-primary"
-						@keyup.enter="searchGames"
+						@keyup.enter="handleSearch"
 					/>
 					<button
 						class="btn btn-primary absolute right-1 top-1/2 -translate-y-1/2"
-						@click="searchGames"
+						@click="handleSearch"
 						:disabled="loading"
 					>
 						<font-awesome-icon
@@ -202,7 +202,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IGDBGameSearchResult, GameResponse } from '~/composables/useApi'
+import type { IGDBGameSearchResult } from '~/composables/useApi'
 
 const props = defineProps<{
 	videoId: string
@@ -214,28 +214,19 @@ const emit = defineEmits<{
 }>()
 
 const modal = ref<HTMLDialogElement>()
-const searchQuery = ref('')
-const searchResults = ref<IGDBGameSearchResult[]>([])
-const dbResults = ref<GameResponse[]>([])
-const showingDbResults = ref(false)
-const loading = ref(false)
-const error = ref('')
-
-const api = useApi()
 const toast = useToast()
 
-// Combined results for display
-const displayResults = computed(() => {
-	if (showingDbResults.value) {
-		// Convert database results to match IGDB format
-		return dbResults.value.map(game => ({
-			id: game.id,
-			name: game.name,
-			url: game.url || '',
-		}))
-	}
-	return searchResults.value
-})
+// Use game search composable
+const {
+	searchQuery,
+	showingDbResults,
+	loading,
+	error,
+	displayResults,
+	searchGames,
+	matchGameToVideo,
+	reset,
+} = useGameSearch()
 
 function open() {
 	modal.value?.showModal()
@@ -243,76 +234,21 @@ function open() {
 
 function close() {
 	modal.value?.close()
-	searchQuery.value = ''
-	searchResults.value = []
-	dbResults.value = []
-	showingDbResults.value = false
-	error.value = ''
+	reset()
 }
 
-async function searchGames() {
-	if (!searchQuery.value.trim()) return
-
-	loading.value = true
-	error.value = ''
-	searchResults.value = []
-	dbResults.value = []
-	showingDbResults.value = false
-
-	try {
-		// First, search in local database
-		const dbResponse = await api.getGames({
-			search: searchQuery.value,
-			limit: 50,
-		})
-
-		if (dbResponse.data && dbResponse.data.length > 0) {
-			// Found results in database
-			dbResults.value = dbResponse.data
-			showingDbResults.value = true
-		} else {
-			// No results in database, search IGDB API
-			const igdbResponse = await api.searchIGDBGames(searchQuery.value)
-			searchResults.value = igdbResponse.data
-			showingDbResults.value = false
-		}
-	} catch (e: any) {
-		error.value = e.message || 'Failed to search games'
-		searchResults.value = []
-		dbResults.value = []
-	} finally {
-		loading.value = false
-	}
+async function handleSearch() {
+	await searchGames(searchQuery.value)
 }
 
-async function selectGame(igdbGame: IGDBGameSearchResult) {
-	loading.value = true
-	error.value = ''
-
+async function selectGame(game: IGDBGameSearchResult) {
 	try {
-		let gameId = igdbGame.id
-
-		// If selecting from IGDB results (not from DB), create the game first
-		if (!showingDbResults.value) {
-			const gameResponse = await api.createGame({
-				id: igdbGame.id,
-				name: igdbGame.name,
-				url: igdbGame.url,
-			})
-			gameId = gameResponse.data.id
-		}
-
-		// Update the video with this game
-		await api.updateVideoGame(props.videoId, gameId)
-
+		await matchGameToVideo(game, props.videoId, showingDbResults.value)
 		toast.showSuccess('Game matched successfully!')
 		emit('gameMatched')
 		close()
 	} catch (e: any) {
-		error.value = e.message || 'Failed to match game'
-		toast.showError('Failed to match game')
-	} finally {
-		loading.value = false
+		toast.showError(e.message || 'Failed to match game')
 	}
 }
 
