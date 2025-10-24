@@ -42,6 +42,7 @@ func NewRouter(handler *handler.Handler) *fiber.App {
 	api.Post("/videos/sync", handler.SyncYouTubeVideos)
 	api.Get("/videos/:id", handler.GetVideoByID)
 	api.Put("/videos/:id/game", handler.UpdateVideoGame)
+	api.Delete("/videos/:id/game", handler.DeleteVideoGame)
 
 	// Game routes
 	api.Get("/games", handler.GetGames)
