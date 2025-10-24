@@ -123,8 +123,8 @@ func inlineParams(query string, args ...any) string {
 					replacement = "0"
 				}
 			case time.Time:
-				// Format time as RFC3339 for SQLite
-				replacement = "'" + v.Format(time.RFC3339) + "'"
+				// Format time as SQLite datetime format
+				replacement = "'" + v.Format("2006-01-02 15:04:05") + "'"
 			default:
 				// For other types, convert to string and quote
 				str := fmt.Sprintf("%v", v)
@@ -347,16 +347,38 @@ func (r *d1Rows) Next(dest []driver.Value) error {
 		if val, ok := row[col]; ok {
 			// Convert datetime strings to a format go-jet can handle
 			if strVal, isString := val.(string); isString {
-				// Try to parse as RFC3339 datetime
-				if t, err := time.Parse(time.RFC3339, strVal); err == nil {
-					// Convert to SQLite datetime format (without timezone)
+				// Try various datetime formats
+				var t time.Time
+				var err error
+
+				// Try to parse datetime - strip monotonic clock if present
+				// Handle format: "2025-10-24 16:48:30.211971376 +0700 +07 m=+50.122713380"
+				parseStr := strVal
+				if idx := strings.Index(parseStr, " m="); idx > 0 {
+					parseStr = parseStr[:idx] // Remove monotonic clock portion
+				}
+
+				// Try various datetime formats
+				// RFC3339: "2025-10-22T09:00:27Z"
+				if t, err = time.Parse(time.RFC3339, parseStr); err == nil {
 					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if _, err := time.Parse("2006-01-02 15:04:05", strVal); err == nil {
+				} else if t, err = time.Parse(time.RFC3339Nano, parseStr); err == nil {
+					dest[i] = t.Format("2006-01-02 15:04:05")
+				} else if t, err = time.Parse("2006-01-02 15:04:05 -0700 MST", parseStr); err == nil {
+					// Go time.String() format: "2025-03-05 09:00:39 +0000 UTC"
+					dest[i] = t.Format("2006-01-02 15:04:05")
+				} else if t, err = time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", parseStr); err == nil {
+					// Go time.String() format with nanoseconds
+					dest[i] = t.Format("2006-01-02 15:04:05")
+				} else if t, err = time.Parse("2006-01-02 15:04:05.999999999 -0700 -07", parseStr); err == nil {
+					// Go time.String() format with numeric timezone
+					dest[i] = t.Format("2006-01-02 15:04:05")
+				} else if _, err = time.Parse("2006-01-02 15:04:05", parseStr); err == nil {
 					// Already in SQLite format
-					dest[i] = strVal
-				} else if _, err := time.Parse("2006-01-02", strVal); err == nil {
+					dest[i] = parseStr
+				} else if _, err = time.Parse("2006-01-02", parseStr); err == nil {
 					// Date only
-					dest[i] = strVal
+					dest[i] = parseStr
 				} else {
 					// Not a datetime, keep as string
 					dest[i] = val
