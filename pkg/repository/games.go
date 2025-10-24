@@ -22,7 +22,7 @@ func (r *Repository) GetGames(ctx context.Context, query model.Offset, search st
 
 	if search != "" {
 		searchPattern := sqlite.String("%" + search + "%")
-		stmt = stmt.WHERE(ILIKE(Games.Name, searchPattern))
+		stmt = stmt.WHERE(Games.Name.LIKE(searchPattern))
 	}
 
 	stmt = stmt.
@@ -61,7 +61,7 @@ func (r *Repository) GetGameTotalItems(ctx context.Context, search string) (int6
 
 	if search != "" {
 		searchPattern := sqlite.String("%" + search + "%")
-		exp := ILIKE(Games.Name, searchPattern)
+		exp := Games.Name.LIKE(searchPattern)
 		expression = &exp
 	}
 

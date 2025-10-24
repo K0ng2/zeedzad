@@ -36,8 +36,8 @@ func (r *Repository) GetVideos(ctx context.Context, query model.Offset, search s
 		searchPattern := sqlite.String("%" + search + "%")
 		stmt = stmt.WHERE(
 			sqlite.OR(
-				ILIKE(Videos.Title, searchPattern),
-				ILIKE(Games.Name, searchPattern),
+				Videos.Title.LIKE(searchPattern),
+				Games.Name.LIKE(searchPattern),
 			),
 		)
 	}
@@ -78,7 +78,7 @@ func (r *Repository) GetVideoTotalItems(ctx context.Context, search string) (int
 
 	if search != "" {
 		searchPattern := sqlite.String("%" + search + "%")
-		exp := ILIKE(Videos.Title, searchPattern)
+		exp := Videos.Title.LIKE(searchPattern)
 		expression = &exp
 	}
 

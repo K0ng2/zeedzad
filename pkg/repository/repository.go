@@ -52,10 +52,6 @@ func NullInt16(i *int) sqlite.IntegerExpression {
 	return sqlite.Int16(int16(*i))
 }
 
-func ILIKE(lhs, rhs sqlite.StringExpression) sqlite.BoolExpression {
-	return sqlite.BoolExp(sqlite.BinaryOperator(lhs, rhs, "ILIKE"))
-}
-
 func TotalItems(ctx context.Context, exec db.Executor, countColumn sqlite.Expression, table sqlite.ReadableTable, expression *sqlite.BoolExpression) (int64, error) {
 	var count model.INT64
 
