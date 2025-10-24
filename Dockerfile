@@ -40,16 +40,12 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
     -o app main.go
 
-FROM alpine:latest AS release-base
-RUN apk add --no-cache ffmpeg
-# Copy timezone data and CA certificates from alpine
-COPY --from=backend-build /usr/share/zoneinfo /usr/share/zoneinfo
-COPY --from=backend-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-
 # Final stage - minimal runtime image
-FROM release-base AS release
+FROM scratch AS release
 # Copy the binary
 COPY --from=backend-build /app/app /bin/app
+COPY --from=backend-build /usr/share/zoneinfo /usr/share/zoneinfo
+COPY --from=backend-build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
 ENV UID=1000
 ENV GID=1000
