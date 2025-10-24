@@ -14,31 +14,51 @@ import (
 	"github.com/cloudflare/cloudflare-go/v6/option"
 )
 
+const (
+	sqliteDateTimeFormat = "2006-01-02 15:04:05"
+	sqliteDateFormat     = "2006-01-02"
+)
+
 type Database struct {
 	client     *cloudflare.Client
 	accountID  string
 	databaseID string
 }
 
+func NewDatabase(accountID, databaseID, apiToken string) (*Database, error) {
+	if err := validateDatabaseConfig(accountID, databaseID, apiToken); err != nil {
+		return nil, err
+	}
+
+	client := cloudflare.NewClient(option.WithAPIToken(apiToken))
+
+	return &Database{
+		client:     client,
+		accountID:  accountID,
+		databaseID: databaseID,
+	}, nil
+}
+
+func validateDatabaseConfig(accountID, databaseID, apiToken string) error {
+	if accountID == "" || databaseID == "" || apiToken == "" {
+		return fmt.Errorf("accountID, databaseID, and apiToken are required")
+	}
+	return nil
+}
+
 func (d *Database) Close() error {
-	// No-op for HTTP client
 	return nil
 }
 
 func (d *Database) Conn() *sql.DB {
-	// Return a database/sql compatible connection
-	// Since go-jet requires this, we need to provide a wrapper
 	return d.getOrCreateSQLDB()
 }
 
 func (d *Database) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
-	// D1 doesn't support traditional transactions via REST API
-	// We'll simulate it by returning a fake tx that executes immediately
 	return nil, fmt.Errorf("transactions not supported with D1 REST API")
 }
 
 func (d *Database) PingContext(ctx context.Context) error {
-	// Test the connection with a simple query
 	_, err := d.client.D1.Database.Query(ctx, d.databaseID, d1.DatabaseQueryParams{
 		AccountID: cloudflare.F(d.accountID),
 		Sql:       cloudflare.F("SELECT 1"),
@@ -84,90 +104,74 @@ func (r D1Result) RowsAffected() (int64, error) {
 	return r.rowsAffected, nil
 }
 
-// inlineParams replaces ? placeholders with actual values for batch queries
-// This is needed because D1 doesn't support params with multiple statements
 func inlineParams(query string, args ...any) string {
 	result := query
 	for _, arg := range args {
-		// Find the first ? and replace it
 		idx := strings.Index(result, "?")
 		if idx == -1 {
 			break
 		}
 
-		var replacement string
-		if arg == nil {
-			replacement = "NULL"
-		} else {
-			// Format the argument based on type
-			switch v := arg.(type) {
-			case string:
-				// Escape single quotes in strings
-				escaped := strings.ReplaceAll(v, "'", "''")
-				replacement = "'" + escaped + "'"
-			case *string:
-				if v == nil {
-					replacement = "NULL"
-				} else {
-					escaped := strings.ReplaceAll(*v, "'", "''")
-					replacement = "'" + escaped + "'"
-				}
-			case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-				replacement = fmt.Sprintf("%d", v)
-			case float32, float64:
-				replacement = fmt.Sprintf("%f", v)
-			case bool:
-				if v {
-					replacement = "1"
-				} else {
-					replacement = "0"
-				}
-			case time.Time:
-				// Format time as SQLite datetime format
-				replacement = "'" + v.Format("2006-01-02 15:04:05") + "'"
-			default:
-				// For other types, convert to string and quote
-				str := fmt.Sprintf("%v", v)
-				escaped := strings.ReplaceAll(str, "'", "''")
-				replacement = "'" + escaped + "'"
-			}
-		}
-
-		// Replace the first ? with the value
+		replacement := formatInlineParam(arg)
 		result = result[:idx] + replacement + result[idx+1:]
 	}
 	return result
 }
 
-// Execute raw SQL query via D1 API
-func (d *Database) executeQuery(ctx context.Context, query string, args ...any) (*QueryResult, error) {
-	// Check if this is a write operation (INSERT, UPDATE, DELETE)
-	// Defer foreign key constraints for write operations
-	upperQuery := strings.ToUpper(strings.TrimSpace(query))
-	isWriteOp := strings.HasPrefix(upperQuery, "INSERT") ||
-		strings.HasPrefix(upperQuery, "UPDATE") ||
-		strings.HasPrefix(upperQuery, "DELETE")
-
-	var finalQuery string
-	var params []string
-
-	if isWriteOp {
-		// For write operations with PRAGMA, we need to inline parameters
-		// because D1 doesn't support params with multiple statements
-		finalQuery = "PRAGMA defer_foreign_keys = on; " + inlineParams(query, args...)
-		params = nil // No separate params when using batch queries
-	} else {
-		// For read operations, use parameterized queries
-		finalQuery = query
-		params = make([]string, len(args))
-		for i, arg := range args {
-			if arg == nil {
-				params[i] = "NULL"
-			} else {
-				params[i] = fmt.Sprintf("%v", arg)
-			}
-		}
+func formatInlineParam(arg any) string {
+	if arg == nil {
+		return "NULL"
 	}
+
+	switch v := arg.(type) {
+	case string:
+		return formatStringParam(v)
+	case *string:
+		return formatStringPointerParam(v)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return fmt.Sprintf("%d", v)
+	case float32, float64:
+		return fmt.Sprintf("%f", v)
+	case bool:
+		return formatBoolParam(v)
+	case time.Time:
+		return formatTimeParam(v)
+	default:
+		return formatDefaultParam(v)
+	}
+}
+
+func formatStringParam(s string) string {
+	escaped := strings.ReplaceAll(s, "'", "''")
+	return "'" + escaped + "'"
+}
+
+func formatStringPointerParam(s *string) string {
+	if s == nil {
+		return "NULL"
+	}
+	return formatStringParam(*s)
+}
+
+func formatBoolParam(b bool) string {
+	if b {
+		return "1"
+	}
+	return "0"
+}
+
+func formatTimeParam(t time.Time) string {
+	return "'" + t.Format(sqliteDateTimeFormat) + "'"
+}
+
+func formatDefaultParam(v any) string {
+	str := fmt.Sprintf("%v", v)
+	escaped := strings.ReplaceAll(str, "'", "''")
+	return "'" + escaped + "'"
+}
+
+func (d *Database) executeQuery(ctx context.Context, query string, args ...any) (*QueryResult, error) {
+	finalQuery, params := d.prepareQuery(query, args...)
 
 	resp, err := d.client.D1.Database.Query(ctx, d.databaseID, d1.DatabaseQueryParams{
 		AccountID: cloudflare.F(d.accountID),
@@ -178,42 +182,94 @@ func (d *Database) executeQuery(ctx context.Context, query string, args ...any) 
 		return nil, err
 	}
 
-	// Get the result (D1 returns an array of results for batch queries)
 	if len(resp.Result) == 0 {
 		return nil, fmt.Errorf("no results returned from D1")
 	}
 
-	// If we prepended PRAGMA, we'll have 2 results: [PRAGMA result, actual query result]
-	// Use the last result which is the actual query
 	d1Result := resp.Result[len(resp.Result)-1]
 
-	// Convert results from []interface{} to []map[string]interface{}
-	results := make([]map[string]interface{}, 0, len(d1Result.Results))
-	for _, r := range d1Result.Results {
+	if !d1Result.Success {
+		return nil, fmt.Errorf("D1 query failed")
+	}
+
+	results := convertD1Results(d1Result.Results)
+	meta := convertD1Meta(d1Result.Meta)
+
+	return &QueryResult{
+		Success: d1Result.Success,
+		Meta:    meta,
+		Results: results,
+	}, nil
+}
+
+func (d *Database) prepareQuery(query string, args ...any) (string, []string) {
+	if isWriteOperation(query) {
+		return d.prepareWriteQuery(query, args...)
+	}
+	return d.prepareReadQuery(query, args...)
+}
+
+func isWriteOperation(query string) bool {
+	upperQuery := strings.ToUpper(strings.TrimSpace(query))
+	return strings.HasPrefix(upperQuery, "INSERT") ||
+		strings.HasPrefix(upperQuery, "UPDATE") ||
+		strings.HasPrefix(upperQuery, "DELETE")
+}
+
+func (d *Database) prepareWriteQuery(query string, args ...any) (string, []string) {
+	inlinedQuery := "PRAGMA defer_foreign_keys = on; " + inlineParams(query, args...)
+	return inlinedQuery, nil
+}
+
+func (d *Database) prepareReadQuery(query string, args ...any) (string, []string) {
+	params := make([]string, len(args))
+	for i, arg := range args {
+		params[i] = formatParamValue(arg)
+	}
+	return query, params
+}
+
+func formatParamValue(arg any) string {
+	if arg == nil {
+		return "NULL"
+	}
+	return fmt.Sprintf("%v", arg)
+}
+
+func convertD1Results(d1Results []interface{}) []map[string]interface{} {
+	results := make([]map[string]interface{}, 0, len(d1Results))
+	for _, r := range d1Results {
 		if m, ok := r.(map[string]interface{}); ok {
 			results = append(results, m)
 		}
 	}
+	return results
+}
 
-	result := &QueryResult{
-		Success: d1Result.Success,
-		Meta: QueryResultMeta{
-			ChangedDB:   d1Result.Meta.ChangedDB,
-			Changes:     d1Result.Meta.Changes,
-			Duration:    d1Result.Meta.Duration,
-			LastRowID:   d1Result.Meta.LastRowID,
-			RowsRead:    d1Result.Meta.RowsRead,
-			RowsWritten: d1Result.Meta.RowsWritten,
-			SizeAfter:   d1Result.Meta.SizeAfter,
-		},
-		Results: results,
+func convertD1Meta(meta interface{}) QueryResultMeta {
+	type metaStruct struct {
+		ChangedDB   bool
+		Changes     float64
+		Duration    float64
+		LastRowID   float64
+		RowsRead    float64
+		RowsWritten float64
+		SizeAfter   float64
 	}
 
-	if !result.Success {
-		return nil, fmt.Errorf("D1 query failed")
+	if m, ok := meta.(metaStruct); ok {
+		return QueryResultMeta{
+			ChangedDB:   m.ChangedDB,
+			Changes:     m.Changes,
+			Duration:    m.Duration,
+			LastRowID:   m.LastRowID,
+			RowsRead:    m.RowsRead,
+			RowsWritten: m.RowsWritten,
+			SizeAfter:   m.SizeAfter,
+		}
 	}
 
-	return result, nil
+	return QueryResultMeta{}
 }
 
 // getOrCreateSQLDB creates a fake database/sql.DB that wraps D1 API
@@ -255,10 +311,7 @@ func (c *d1Conn) Begin() (driver.Tx, error) {
 }
 
 func (c *d1Conn) ExecContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
-	queryArgs := make([]any, len(args))
-	for i, arg := range args {
-		queryArgs[i] = arg.Value
-	}
+	queryArgs := convertNamedValuesToArgs(args)
 
 	result, err := c.database.executeQuery(ctx, query, queryArgs...)
 	if err != nil {
@@ -272,10 +325,7 @@ func (c *d1Conn) ExecContext(ctx context.Context, query string, args []driver.Na
 }
 
 func (c *d1Conn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (driver.Rows, error) {
-	queryArgs := make([]any, len(args))
-	for i, arg := range args {
-		queryArgs[i] = arg.Value
-	}
+	queryArgs := convertNamedValuesToArgs(args)
 
 	result, err := c.database.executeQuery(ctx, query, queryArgs...)
 	if err != nil {
@@ -283,6 +333,14 @@ func (c *d1Conn) QueryContext(ctx context.Context, query string, args []driver.N
 	}
 
 	return &d1Rows{results: result.Results, index: -1}, nil
+}
+
+func convertNamedValuesToArgs(args []driver.NamedValue) []any {
+	queryArgs := make([]any, len(args))
+	for i, arg := range args {
+		queryArgs[i] = arg.Value
+	}
+	return queryArgs
 }
 
 type d1Stmt struct {
@@ -299,11 +357,11 @@ func (s *d1Stmt) NumInput() int {
 }
 
 func (s *d1Stmt) Exec(args []driver.Value) (driver.Result, error) {
-	return s.ExecContext(context.Background(), toNamedValues(args))
+	return s.ExecContext(context.Background(), convertValuesToNamedValues(args))
 }
 
 func (s *d1Stmt) Query(args []driver.Value) (driver.Rows, error) {
-	return s.QueryContext(context.Background(), toNamedValues(args))
+	return s.QueryContext(context.Background(), convertValuesToNamedValues(args))
 }
 
 func (s *d1Stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (driver.Result, error) {
@@ -322,12 +380,17 @@ type d1Rows struct {
 
 func (r *d1Rows) Columns() []string {
 	if r.columns == nil && len(r.results) > 0 {
-		r.columns = make([]string, 0, len(r.results[0]))
-		for col := range r.results[0] {
-			r.columns = append(r.columns, col)
-		}
+		r.columns = extractColumnNames(r.results[0])
 	}
 	return r.columns
+}
+
+func extractColumnNames(row map[string]interface{}) []string {
+	columns := make([]string, 0, len(row))
+	for col := range row {
+		columns = append(columns, col)
+	}
+	return columns
 }
 
 func (r *d1Rows) Close() error {
@@ -340,58 +403,62 @@ func (r *d1Rows) Next(dest []driver.Value) error {
 		return io.EOF
 	}
 
+	r.populateRowValues(dest)
+	return nil
+}
+
+func (r *d1Rows) populateRowValues(dest []driver.Value) {
 	row := r.results[r.index]
 	columns := r.Columns()
 
 	for i, col := range columns {
 		if val, ok := row[col]; ok {
-			// Convert datetime strings to a format go-jet can handle
-			if strVal, isString := val.(string); isString {
-				// Try various datetime formats
-				var t time.Time
-				var err error
-
-				// Try to parse datetime - strip monotonic clock if present
-				// Handle format: "2025-10-24 16:48:30.211971376 +0700 +07 m=+50.122713380"
-				parseStr := strVal
-				if idx := strings.Index(parseStr, " m="); idx > 0 {
-					parseStr = parseStr[:idx] // Remove monotonic clock portion
-				}
-
-				// Try various datetime formats
-				// RFC3339: "2025-10-22T09:00:27Z"
-				if t, err = time.Parse(time.RFC3339, parseStr); err == nil {
-					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if t, err = time.Parse(time.RFC3339Nano, parseStr); err == nil {
-					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if t, err = time.Parse("2006-01-02 15:04:05 -0700 MST", parseStr); err == nil {
-					// Go time.String() format: "2025-03-05 09:00:39 +0000 UTC"
-					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if t, err = time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", parseStr); err == nil {
-					// Go time.String() format with nanoseconds
-					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if t, err = time.Parse("2006-01-02 15:04:05.999999999 -0700 -07", parseStr); err == nil {
-					// Go time.String() format with numeric timezone
-					dest[i] = t.Format("2006-01-02 15:04:05")
-				} else if _, err = time.Parse("2006-01-02 15:04:05", parseStr); err == nil {
-					// Already in SQLite format
-					dest[i] = parseStr
-				} else if _, err = time.Parse("2006-01-02", parseStr); err == nil {
-					// Date only
-					dest[i] = parseStr
-				} else {
-					// Not a datetime, keep as string
-					dest[i] = val
-				}
-			} else {
-				dest[i] = val
-			}
+			dest[i] = convertColumnValue(val)
 		} else {
 			dest[i] = nil
 		}
 	}
+}
 
-	return nil
+func convertColumnValue(val interface{}) interface{} {
+	strVal, isString := val.(string)
+	if !isString {
+		return val
+	}
+
+	return parseDateTime(strVal)
+}
+
+func parseDateTime(strVal string) interface{} {
+	cleanedStr := stripMonotonicClock(strVal)
+
+	timeFormats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02 15:04:05 -0700 MST",
+		"2006-01-02 15:04:05.999999999 -0700 MST",
+		"2006-01-02 15:04:05.999999999 -0700 -07",
+		sqliteDateTimeFormat,
+		sqliteDateFormat,
+	}
+
+	for _, format := range timeFormats {
+		if t, err := time.Parse(format, cleanedStr); err == nil {
+			if format == sqliteDateTimeFormat || format == sqliteDateFormat {
+				return cleanedStr
+			}
+			return t.Format(sqliteDateTimeFormat)
+		}
+	}
+
+	return strVal
+}
+
+func stripMonotonicClock(s string) string {
+	if idx := strings.Index(s, " m="); idx > 0 {
+		return s[:idx]
+	}
+	return s
 }
 
 type d1Tx struct {
@@ -408,7 +475,7 @@ func (tx *d1Tx) Rollback() error {
 	return nil
 }
 
-func toNamedValues(values []driver.Value) []driver.NamedValue {
+func convertValuesToNamedValues(values []driver.Value) []driver.NamedValue {
 	named := make([]driver.NamedValue, len(values))
 	for i, v := range values {
 		named[i] = driver.NamedValue{
@@ -417,18 +484,4 @@ func toNamedValues(values []driver.Value) []driver.NamedValue {
 		}
 	}
 	return named
-}
-
-func NewDatabase(accountID, databaseID, apiToken string) (*Database, error) {
-	if accountID == "" || databaseID == "" || apiToken == "" {
-		return nil, fmt.Errorf("accountID, databaseID, and apiToken are required")
-	}
-
-	client := cloudflare.NewClient(option.WithAPIToken(apiToken))
-
-	return &Database{
-		client:     client,
-		accountID:  accountID,
-		databaseID: databaseID,
-	}, nil
 }
