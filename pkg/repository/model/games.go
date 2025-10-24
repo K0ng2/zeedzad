@@ -14,8 +14,7 @@ import (
 type Games struct {
 	ID        *int32    `sql:"primary_key" json:"id"`
 	Name      string    `json:"name"`
-	Icon      *string   `json:"icon"`
-	Logo      *string   `json:"logo"`
+	URL       string    `json:"url"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

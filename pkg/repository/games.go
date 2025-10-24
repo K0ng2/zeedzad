@@ -69,22 +69,16 @@ func (r *Repository) GetGameTotalItems(ctx context.Context, search string) (int6
 }
 
 func (r *Repository) CreateGame(ctx context.Context, req model.CreateGameRequest) (int64, error) {
-	var iconValue sqlite.Expression = sqlite.NULL
-	if req.Icon != nil {
-		iconValue = sqlite.String(*req.Icon)
+	var urlValue sqlite.Expression = sqlite.NULL
+	if req.URL != nil {
+		urlValue = sqlite.String(*req.URL)
 	}
 
-	var logoValue sqlite.Expression = sqlite.NULL
-	if req.Logo != nil {
-		logoValue = sqlite.String(*req.Logo)
-	}
-
-	stmt := Games.INSERT(Games.ID, Games.Name, Games.Icon, Games.Logo, Games.CreatedAt, Games.UpdatedAt).
+	stmt := Games.INSERT(Games.ID, Games.Name, Games.URL, Games.CreatedAt, Games.UpdatedAt).
 		VALUES(
 			req.ID,
 			req.Name,
-			iconValue,
-			logoValue,
+			urlValue,
 			time.Now(),
 			time.Now(),
 		)
@@ -108,8 +102,7 @@ func convertToGameResponses(games []repoModel.Games) []model.GameResponse {
 		responses = append(responses, model.GameResponse{
 			ID:        *g.ID,
 			Name:      g.Name,
-			Icon:      g.Icon,
-			Logo:      g.Logo,
+			URL:       &g.URL,
 			CreatedAt: g.CreatedAt,
 			UpdatedAt: g.UpdatedAt,
 		})

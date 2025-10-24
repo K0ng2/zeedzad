@@ -1,11 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
-	"net/url"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -82,43 +78,29 @@ func (h *Handler) GetGameByID(c fiber.Ctx) error {
 	return c.JSON(Response(game, nil))
 }
 
-// SearchSteamGames godoc
-// @Summary Search Steam games
-// @Description Search for games on Steam by name
+// SearchIGDBGames godoc
+// @Summary Search IGDB games
+// @Description Search for games on IGDB by name
 // @Tags games
 // @Accept  json
 // @Produce  json
 // @Param q query string true "Search query"
-// @Success 200 {object} model.APIResponse[[]model.SteamAppSearchResult]
+// @Success 200 {object} model.APIResponse[[]model.IGDBGameSearchResult]
 // @Failure 400 {object} model.Error
 // @Failure 500 {object} model.Error
-// @Router /games/steam/search [get]
-func (h *Handler) SearchSteamGames(c fiber.Ctx) error {
+// @Router /games/igdb/search [get]
+func (h *Handler) SearchIGDBGames(c fiber.Ctx) error {
 	query := c.Query("q", "")
 	if query == "" {
 		return c.Status(http.StatusBadRequest).JSON(model.Error{Error: "query parameter 'q' is required"})
 	}
 
-	encodedQuery := url.QueryEscape(query)
-	steamURL := fmt.Sprintf("https://steamcommunity.com/actions/SearchApps/%s", encodedQuery)
-
-	resp, err := http.Get(steamURL)
+	results, err := h.igdb.SearchGames(query)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: "failed to search steam: " + err.Error()})
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: "failed to read steam response: " + err.Error()})
+		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: "failed to search igdb: " + err.Error()})
 	}
 
-	var steamResults []model.SteamAppSearchResult
-	if err := json.Unmarshal(body, &steamResults); err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: "failed to parse steam response: " + err.Error()})
-	}
-
-	return c.JSON(Response(steamResults, nil))
+	return c.JSON(Response(results, nil))
 }
 
 // CreateGame godoc
