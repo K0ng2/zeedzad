@@ -18,9 +18,9 @@ func main() {
 	flag.StringVar(&port, "port", ":8088", "Server port")
 	flag.Parse()
 
-	database, err := db.NewDatabase(config.SQLITE_PATH)
+	database, err := db.NewDatabase(config.D1_ACCOUNT_ID, config.D1_DATABASE_ID, config.CLOUDFLARE_API_TOKEN)
 	if err != nil {
-		log.Fatalf("Failed to connect to SQLite: %v", err)
+		log.Fatalf("Failed to connect to Cloudflare D1: %v", err)
 	}
 	defer database.Close()
 
@@ -34,7 +34,9 @@ func main() {
 
 	// show config
 	fmt.Println("Using configuration:")
-	fmt.Printf("  SQLITE_PATH: %s\n", config.SQLITE_PATH)
+	fmt.Printf("  D1_ACCOUNT_ID: %s\n", config.D1_ACCOUNT_ID)
+	fmt.Printf("  D1_DATABASE_ID: %s\n", config.D1_DATABASE_ID)
+	fmt.Printf("  CLOUDFLARE_API_TOKEN: %s\n", maskToken(config.CLOUDFLARE_API_TOKEN))
 	fmt.Printf("  YOUTUBE_API_KEY: %s\n", config.YOUTUBE_API_KEY)
 	fmt.Printf("  IGDB_CLIENT_ID: %s\n", config.IGDB_CLIENT_ID)
 
@@ -43,4 +45,11 @@ func main() {
 	if err := r.Listen(port); err != nil {
 		panic(err)
 	}
+}
+
+func maskToken(token string) string {
+	if len(token) < 8 {
+		return "***"
+	}
+	return token[:4] + "..." + token[len(token)-4:]
 }
