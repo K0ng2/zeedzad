@@ -1,75 +1,56 @@
-# Nuxt Minimal Starter
+# Nuxt frontend (web)
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+This is the Nuxt 4 frontend for Zeedzad. It is a standard Nuxt app and can be run with bun, npm, or pnpm.
 
-## Setup
+See the Nuxt docs for more details: https://nuxt.com/docs/getting-started/introduction
 
-Make sure to install dependencies:
+## Install dependencies
 
 ```bash
+# bun
+bun install
+
 # npm
 npm install
 
 # pnpm
 pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+## Development
 
-Start the development server on `http://localhost:3000`:
+Start the dev server (default: http://localhost:3000):
 
 ```bash
+# bun
+bun dev
+
 # npm
 npm run dev
 
 # pnpm
 pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+The frontend development server expects the backend API at `http://localhost:8088` by default. Change `NUXT_PUBLIC_API_BASE` if you run the backend on a different host/port.
 
-Build the application for production:
+## Production build
 
 ```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
+# build
 bun run build
-```
 
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
+# preview locally
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+After build, copy the generated static assets into the backend embed directory if you plan to serve them from the Go binary:
+
+```bash
+cp -r .output/public/* ../pkg/web/public/
+```
+
+## Notes
+
+- The frontend uses Tailwind CSS and DaisyUI.
+- Use `NUXT_PUBLIC_API_BASE` to point to the backend API when developing.
