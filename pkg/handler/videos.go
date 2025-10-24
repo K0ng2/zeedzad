@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 
 	"github.com/K0ng2/zeedzad/model"
 )
@@ -65,8 +64,8 @@ func (h *Handler) GetVideos(c fiber.Ctx) error {
 func (h *Handler) GetVideoByID(c fiber.Ctx) error {
 	ctx := c.RequestCtx()
 
-	id, err := fiber.Convert(c.Params("id"), uuid.Parse)
-	if err != nil {
+	id := c.Params("id")
+	if id == "" {
 		return c.Status(http.StatusBadRequest).JSON(ErrInvalidPathParams)
 	}
 
@@ -93,8 +92,8 @@ func (h *Handler) GetVideoByID(c fiber.Ctx) error {
 func (h *Handler) UpdateVideoGame(c fiber.Ctx) error {
 	ctx := c.RequestCtx()
 
-	videoID, err := fiber.Convert(c.Params("id"), uuid.Parse)
-	if err != nil {
+	videoID := c.Params("id")
+	if videoID == "" {
 		return c.Status(http.StatusBadRequest).JSON(ErrInvalidPathParams)
 	}
 
@@ -103,12 +102,7 @@ func (h *Handler) UpdateVideoGame(c fiber.Ctx) error {
 		return c.Status(http.StatusBadRequest).JSON(ErrInvalidRequestBody)
 	}
 
-	gameID, err := uuid.Parse(requestBody.GameID)
-	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(model.Error{Error: "invalid game id"})
-	}
-
-	err = h.repo.UpdateVideoGame(ctx, videoID, gameID)
+	err := h.repo.UpdateVideoGame(ctx, videoID, requestBody.GameID)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: err.Error()})
 	}

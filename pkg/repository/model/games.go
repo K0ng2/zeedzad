@@ -12,8 +12,7 @@ import (
 )
 
 type Games struct {
-	ID        *string   `sql:"primary_key" json:"id"`
-	AppID     string    `json:"app_id"`
+	ID        *int32    `sql:"primary_key" json:"id"`
 	Name      string    `json:"name"`
 	Icon      *string   `json:"icon"`
 	Logo      *string   `json:"logo"`

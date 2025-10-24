@@ -17,17 +17,13 @@ type videosTable struct {
 	sqlite.Table
 
 	// Columns
-	ID           sqlite.ColumnString
-	YoutubeID    sqlite.ColumnString
-	Title        sqlite.ColumnString
-	Description  sqlite.ColumnString
-	Thumbnail    sqlite.ColumnString
-	PublishedAt  sqlite.ColumnTimestamp
-	ChannelID    sqlite.ColumnString
-	ChannelTitle sqlite.ColumnString
-	GameID       sqlite.ColumnString
-	CreatedAt    sqlite.ColumnTimestamp
-	UpdatedAt    sqlite.ColumnTimestamp
+	ID          sqlite.ColumnString
+	Title       sqlite.ColumnString
+	Thumbnail   sqlite.ColumnString
+	PublishedAt sqlite.ColumnTimestamp
+	GameID      sqlite.ColumnInteger
+	CreatedAt   sqlite.ColumnTimestamp
+	UpdatedAt   sqlite.ColumnTimestamp
 
 	AllColumns     sqlite.ColumnList
 	MutableColumns sqlite.ColumnList
@@ -69,37 +65,29 @@ func newVideosTable(schemaName, tableName, alias string) *VideosTable {
 
 func newVideosTableImpl(schemaName, tableName, alias string) videosTable {
 	var (
-		IDColumn           = sqlite.StringColumn("id")
-		YoutubeIDColumn    = sqlite.StringColumn("youtube_id")
-		TitleColumn        = sqlite.StringColumn("title")
-		DescriptionColumn  = sqlite.StringColumn("description")
-		ThumbnailColumn    = sqlite.StringColumn("thumbnail")
-		PublishedAtColumn  = sqlite.TimestampColumn("published_at")
-		ChannelIDColumn    = sqlite.StringColumn("channel_id")
-		ChannelTitleColumn = sqlite.StringColumn("channel_title")
-		GameIDColumn       = sqlite.StringColumn("game_id")
-		CreatedAtColumn    = sqlite.TimestampColumn("created_at")
-		UpdatedAtColumn    = sqlite.TimestampColumn("updated_at")
-		allColumns         = sqlite.ColumnList{IDColumn, YoutubeIDColumn, TitleColumn, DescriptionColumn, ThumbnailColumn, PublishedAtColumn, ChannelIDColumn, ChannelTitleColumn, GameIDColumn, CreatedAtColumn, UpdatedAtColumn}
-		mutableColumns     = sqlite.ColumnList{YoutubeIDColumn, TitleColumn, DescriptionColumn, ThumbnailColumn, PublishedAtColumn, ChannelIDColumn, ChannelTitleColumn, GameIDColumn, CreatedAtColumn, UpdatedAtColumn}
-		defaultColumns     = sqlite.ColumnList{CreatedAtColumn, UpdatedAtColumn}
+		IDColumn          = sqlite.StringColumn("id")
+		TitleColumn       = sqlite.StringColumn("title")
+		ThumbnailColumn   = sqlite.StringColumn("thumbnail")
+		PublishedAtColumn = sqlite.TimestampColumn("published_at")
+		GameIDColumn      = sqlite.IntegerColumn("game_id")
+		CreatedAtColumn   = sqlite.TimestampColumn("created_at")
+		UpdatedAtColumn   = sqlite.TimestampColumn("updated_at")
+		allColumns        = sqlite.ColumnList{IDColumn, TitleColumn, ThumbnailColumn, PublishedAtColumn, GameIDColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns    = sqlite.ColumnList{TitleColumn, ThumbnailColumn, PublishedAtColumn, GameIDColumn, CreatedAtColumn, UpdatedAtColumn}
+		defaultColumns    = sqlite.ColumnList{CreatedAtColumn, UpdatedAtColumn}
 	)
 
 	return videosTable{
 		Table: sqlite.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
-		ID:           IDColumn,
-		YoutubeID:    YoutubeIDColumn,
-		Title:        TitleColumn,
-		Description:  DescriptionColumn,
-		Thumbnail:    ThumbnailColumn,
-		PublishedAt:  PublishedAtColumn,
-		ChannelID:    ChannelIDColumn,
-		ChannelTitle: ChannelTitleColumn,
-		GameID:       GameIDColumn,
-		CreatedAt:    CreatedAtColumn,
-		UpdatedAt:    UpdatedAtColumn,
+		ID:          IDColumn,
+		Title:       TitleColumn,
+		Thumbnail:   ThumbnailColumn,
+		PublishedAt: PublishedAtColumn,
+		GameID:      GameIDColumn,
+		CreatedAt:   CreatedAtColumn,
+		UpdatedAt:   UpdatedAtColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 
@@ -110,16 +109,12 @@ func (h *Handler) SyncYouTubeVideos(c fiber.Ctx) error {
 			}
 
 			video := repoModel.Videos{
-				ID:           stringPtr(uuid.New().String()),
-				YoutubeID:    videoID,
-				Title:        item.Snippet.Title,
-				Description:  stringPtr(item.Snippet.Description),
-				Thumbnail:    stringPtr(thumbnail),
-				PublishedAt:  publishedAt,
-				ChannelID:    item.Snippet.ChannelId,
-				ChannelTitle: stringPtr(item.Snippet.ChannelTitle),
-				CreatedAt:    time.Now(),
-				UpdatedAt:    time.Now(),
+				ID:          stringPtr(videoID),
+				Title:       item.Snippet.Title,
+				Thumbnail:   stringPtr(thumbnail),
+				PublishedAt: publishedAt,
+				CreatedAt:   time.Now(),
+				UpdatedAt:   time.Now(),
 			}
 
 			err = h.repo.CreateVideo(ctx, video)

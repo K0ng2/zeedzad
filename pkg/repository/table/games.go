@@ -17,8 +17,7 @@ type gamesTable struct {
 	sqlite.Table
 
 	// Columns
-	ID        sqlite.ColumnString
-	AppID     sqlite.ColumnString
+	ID        sqlite.ColumnInteger
 	Name      sqlite.ColumnString
 	Icon      sqlite.ColumnString
 	Logo      sqlite.ColumnString
@@ -65,15 +64,14 @@ func newGamesTable(schemaName, tableName, alias string) *GamesTable {
 
 func newGamesTableImpl(schemaName, tableName, alias string) gamesTable {
 	var (
-		IDColumn        = sqlite.StringColumn("id")
-		AppIDColumn     = sqlite.StringColumn("app_id")
+		IDColumn        = sqlite.IntegerColumn("id")
 		NameColumn      = sqlite.StringColumn("name")
 		IconColumn      = sqlite.StringColumn("icon")
 		LogoColumn      = sqlite.StringColumn("logo")
 		CreatedAtColumn = sqlite.TimestampColumn("created_at")
 		UpdatedAtColumn = sqlite.TimestampColumn("updated_at")
-		allColumns      = sqlite.ColumnList{IDColumn, AppIDColumn, NameColumn, IconColumn, LogoColumn, CreatedAtColumn, UpdatedAtColumn}
-		mutableColumns  = sqlite.ColumnList{AppIDColumn, NameColumn, IconColumn, LogoColumn, CreatedAtColumn, UpdatedAtColumn}
+		allColumns      = sqlite.ColumnList{IDColumn, NameColumn, IconColumn, LogoColumn, CreatedAtColumn, UpdatedAtColumn}
+		mutableColumns  = sqlite.ColumnList{NameColumn, IconColumn, LogoColumn, CreatedAtColumn, UpdatedAtColumn}
 		defaultColumns  = sqlite.ColumnList{CreatedAtColumn, UpdatedAtColumn}
 	)
 
@@ -82,7 +80,6 @@ func newGamesTableImpl(schemaName, tableName, alias string) gamesTable {
 
 		//Columns
 		ID:        IDColumn,
-		AppID:     AppIDColumn,
 		Name:      NameColumn,
 		Icon:      IconColumn,
 		Logo:      LogoColumn,
