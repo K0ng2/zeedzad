@@ -191,7 +191,7 @@ async function selectGame(igdbGame: IGDBGameSearchResult) {
 		})
 
 		// Then update the video with this game
-		await api.updateVideoGame(props.videoId, gameResponse.data.id.toString())
+		await api.updateVideoGame(props.videoId, gameResponse.data.id)
 
 		toast.showSuccess('Game matched successfully!')
 		emit('gameMatched')
