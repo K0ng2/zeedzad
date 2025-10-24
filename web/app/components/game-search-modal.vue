@@ -84,11 +84,35 @@
 
 			<!-- Search Results -->
 			<div
-				v-else-if="searchResults.length > 0"
+				v-else-if="displayResults.length > 0"
 				class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin"
 			>
+				<!-- Results Source Indicator -->
+				<div class="flex items-center gap-2 mb-3">
+					<div
+						v-if="showingDbResults"
+						class="badge badge-success badge-sm gap-1"
+					>
+						<font-awesome-icon
+							icon="check-circle"
+							class="w-3 h-3"
+						/>
+						<span>Found {{ displayResults.length }} in Database</span>
+					</div>
+					<div
+						v-else
+						class="badge badge-info badge-sm gap-1"
+					>
+						<font-awesome-icon
+							icon="info-circle"
+							class="w-3 h-3"
+						/>
+						<span>Results from IGDB</span>
+					</div>
+				</div>
+
 				<div
-					v-for="game in searchResults"
+					v-for="game in displayResults"
 					:key="game.id"
 					class="group relative bg-base-200 hover:bg-base-300 rounded-xl border border-base-300 hover:border-primary/50 cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden"
 					@click="selectGame(game)"
@@ -178,7 +202,7 @@
 </template>
 
 <script setup lang="ts">
-import type { IGDBGameSearchResult } from '~/composables/useApi'
+import type { IGDBGameSearchResult, GameResponse } from '~/composables/useApi'
 
 const props = defineProps<{
 	videoId: string
@@ -192,11 +216,26 @@ const emit = defineEmits<{
 const modal = ref<HTMLDialogElement>()
 const searchQuery = ref('')
 const searchResults = ref<IGDBGameSearchResult[]>([])
+const dbResults = ref<GameResponse[]>([])
+const showingDbResults = ref(false)
 const loading = ref(false)
 const error = ref('')
 
 const api = useApi()
 const toast = useToast()
+
+// Combined results for display
+const displayResults = computed(() => {
+	if (showingDbResults.value) {
+		// Convert database results to match IGDB format
+		return dbResults.value.map(game => ({
+			id: game.id,
+			name: game.name,
+			url: game.url || '',
+		}))
+	}
+	return searchResults.value
+})
 
 function open() {
 	modal.value?.showModal()
@@ -206,6 +245,8 @@ function close() {
 	modal.value?.close()
 	searchQuery.value = ''
 	searchResults.value = []
+	dbResults.value = []
+	showingDbResults.value = false
 	error.value = ''
 }
 
@@ -214,13 +255,31 @@ async function searchGames() {
 
 	loading.value = true
 	error.value = ''
+	searchResults.value = []
+	dbResults.value = []
+	showingDbResults.value = false
 
 	try {
-		const response = await api.searchIGDBGames(searchQuery.value)
-		searchResults.value = response.data
+		// First, search in local database
+		const dbResponse = await api.getGames({
+			search: searchQuery.value,
+			limit: 50,
+		})
+
+		if (dbResponse.data && dbResponse.data.length > 0) {
+			// Found results in database
+			dbResults.value = dbResponse.data
+			showingDbResults.value = true
+		} else {
+			// No results in database, search IGDB API
+			const igdbResponse = await api.searchIGDBGames(searchQuery.value)
+			searchResults.value = igdbResponse.data
+			showingDbResults.value = false
+		}
 	} catch (e: any) {
 		error.value = e.message || 'Failed to search games'
 		searchResults.value = []
+		dbResults.value = []
 	} finally {
 		loading.value = false
 	}
@@ -231,15 +290,20 @@ async function selectGame(igdbGame: IGDBGameSearchResult) {
 	error.value = ''
 
 	try {
-		// First, create/get the game in our database
-		const gameResponse = await api.createGame({
-			id: igdbGame.id,
-			name: igdbGame.name,
-			url: igdbGame.url,
-		})
+		let gameId = igdbGame.id
 
-		// Then update the video with this game
-		await api.updateVideoGame(props.videoId, gameResponse.data.id)
+		// If selecting from IGDB results (not from DB), create the game first
+		if (!showingDbResults.value) {
+			const gameResponse = await api.createGame({
+				id: igdbGame.id,
+				name: igdbGame.name,
+				url: igdbGame.url,
+			})
+			gameId = gameResponse.data.id
+		}
+
+		// Update the video with this game
+		await api.updateVideoGame(props.videoId, gameId)
 
 		toast.showSuccess('Game matched successfully!')
 		emit('gameMatched')
