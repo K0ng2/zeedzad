@@ -165,7 +165,7 @@ definePageMeta({
 	layout: 'default',
 })
 
-const ITEMS_PER_PAGE = 24
+const ITEMS_PER_PAGE = 25
 
 const api = useApi()
 const videos = ref<Video[]>([])
