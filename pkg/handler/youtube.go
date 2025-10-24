@@ -64,7 +64,7 @@ func (h *Handler) SyncYouTubeVideos(c fiber.Ctx) error {
 
 	// Paginate through playlist items
 	for fetchedCount < maxResults {
-		playlistCall := service.PlaylistItems.List([]string{"snippet", "contentDetails"})
+		playlistCall := service.PlaylistItems.List([]string{"snippet"})
 		playlistCall = playlistCall.PlaylistId(uploadsPlaylistID)
 		playlistCall = playlistCall.MaxResults(50) // Fetch 50 per page (max allowed)
 
@@ -88,7 +88,7 @@ func (h *Handler) SyncYouTubeVideos(c fiber.Ctx) error {
 			}
 			fetchedCount++
 
-			videoID := item.Id
+			videoID := item.Snippet.ResourceId.VideoId
 
 			// Check if video already exists
 			existingVideo, err := h.repo.GetVideoByYouTubeID(ctx, videoID)
@@ -142,7 +142,7 @@ func (h *Handler) SyncYouTubeVideos(c fiber.Ctx) error {
 		Added:   added,
 		Skipped: skipped,
 		Errors:  errors,
-		Total:   int(fetchedCount),
+		Total:   fetchedCount,
 	}
 
 	return c.JSON(Response(result, nil))
