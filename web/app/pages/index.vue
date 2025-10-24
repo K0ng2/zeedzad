@@ -49,6 +49,7 @@
 					:key="video.id"
 					:video="video"
 					@open-game-modal="openGameModal"
+					@game-removed="refreshVideos"
 				/>
 			</div>
 

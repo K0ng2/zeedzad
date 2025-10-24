@@ -39,13 +39,32 @@
               IGDB →
             </a>
           </div>
-          <button
-            class="btn btn-outline btn-xs w-full"
-            @click="handleChangeGame"
-          >
-            <font-awesome-icon icon="pen" />
-            Change Game
-          </button>
+          <div class="flex gap-2">
+            <button
+              class="btn btn-outline btn-xs flex-1"
+              @click="handleChangeGame"
+              :disabled="isDeleting"
+            >
+              <font-awesome-icon icon="pen" />
+              Change
+            </button>
+            <button
+              class="btn btn-error btn-xs flex-1"
+              @click="handleRemoveGame"
+              :disabled="isDeleting"
+            >
+              <font-awesome-icon
+                v-if="isDeleting"
+                icon="spinner"
+                spin
+              />
+              <font-awesome-icon
+                v-else
+                icon="trash"
+              />
+              Remove
+            </button>
+          </div>
         </div>
         <button
           v-else
@@ -82,7 +101,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   openGameModal: [video: Video]
+  gameRemoved: []
 }>()
+
+const api = useApi()
+const toast = useToast()
+const isDeleting = ref(false)
 
 function formatDate(dateString: string) {
   const date = new Date(dateString)
@@ -99,6 +123,24 @@ function handleMatchGame() {
 
 function handleChangeGame() {
   emit('openGameModal', props.video)
+}
+
+async function handleRemoveGame() {
+  if (!confirm('Are you sure you want to remove this game match?')) {
+    return
+  }
+
+  isDeleting.value = true
+
+  try {
+    await api.deleteVideoGame(props.video.id)
+    toast.showSuccess('Game removed successfully!')
+    emit('gameRemoved')
+  } catch (e: any) {
+    toast.showError(e.message || 'Failed to remove game')
+  } finally {
+    isDeleting.value = false
+  }
 }
 </script>
 

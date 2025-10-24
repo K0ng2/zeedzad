@@ -54,6 +54,12 @@ export function useApi() {
 			throw new Error(error.error || 'API request failed')
 		}
 
+		// Handle empty or non-JSON responses
+		const contentType = response.headers.get('content-type')
+		if (!contentType || !contentType.includes('application/json')) {
+			return undefined as T
+		}
+
 		return response.json()
 	}
 
@@ -76,6 +82,12 @@ export function useApi() {
 			return fetchAPI<void>(`/videos/${videoId}/game`, {
 				method: 'PUT',
 				body: JSON.stringify({ game_id: gameId }),
+			})
+		},
+
+		async deleteVideoGame(videoId: string) {
+			return fetchAPI<void>(`/videos/${videoId}/game`, {
+				method: 'DELETE',
 			})
 		},
 

@@ -101,6 +101,22 @@ func (r *Repository) UpdateVideoGame(ctx context.Context, videoID string, gameID
 	return nil
 }
 
+func (r *Repository) DeleteVideoGame(ctx context.Context, videoID string) error {
+	stmt := Videos.UPDATE(Videos.GameID, Videos.UpdatedAt).
+		SET(
+			sqlite.NULL,
+			sqlite.CURRENT_TIMESTAMP(),
+		).
+		WHERE(Videos.ID.EQ(sqlite.String(videoID)))
+
+	_, err := stmt.ExecContext(ctx, r.ex)
+	if err != nil {
+		return FormatError("delete video game", err)
+	}
+
+	return nil
+}
+
 func (r *Repository) CreateVideo(ctx context.Context, video repoModel.Videos) error {
 	stmt := Videos.INSERT(Videos.ID, Videos.Title, Videos.Thumbnail, Videos.PublishedAt, Videos.GameID, Videos.CreatedAt, Videos.UpdatedAt).
 		VALUES(

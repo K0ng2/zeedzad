@@ -8,7 +8,10 @@ import {
 	faChevronRight,
 	faExclamationCircle,
 	faSpinner,
-	faPen
+	faPen,
+	faTimes,
+	faCheckCircle,
+	faTrash
 } from "@fortawesome/free-solid-svg-icons";
 
 import { faYoutube } from "@fortawesome/free-brands-svg-icons";
@@ -22,7 +25,10 @@ const icons = [
 	faExclamationCircle,
 	faSpinner,
 	faPen,
-	faYoutube
+	faYoutube,
+	faTimes,
+	faCheckCircle,
+	faTrash,
 ];
 
 // This is important, we are going to let Nuxt worry about the CSS

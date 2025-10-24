@@ -109,3 +109,30 @@ func (h *Handler) UpdateVideoGame(c fiber.Ctx) error {
 
 	return c.SendStatus(http.StatusOK)
 }
+
+// DeleteVideoGame godoc
+// @Summary Remove game match from video
+// @Description Remove the game association from a video
+// @Tags videos
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Video ID"
+// @Success 200
+// @Failure 400 {object} model.Error
+// @Failure 500 {object} model.Error
+// @Router /videos/{id}/game [delete]
+func (h *Handler) DeleteVideoGame(c fiber.Ctx) error {
+	ctx := c.RequestCtx()
+
+	videoID := c.Params("id")
+	if videoID == "" {
+		return c.Status(http.StatusBadRequest).JSON(ErrInvalidPathParams)
+	}
+
+	err := h.repo.DeleteVideoGame(ctx, videoID)
+	if err != nil {
+		return c.Status(http.StatusInternalServerError).JSON(model.Error{Error: err.Error()})
+	}
+
+	return c.SendStatus(http.StatusOK)
+}

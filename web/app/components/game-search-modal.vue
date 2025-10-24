@@ -150,8 +150,6 @@ const toast = useToast()
 
 function open() {
 	modal.value?.showModal()
-	searchQuery.value = props.videoTitle
-	searchGames()
 }
 
 function close() {
