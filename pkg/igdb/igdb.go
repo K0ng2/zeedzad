@@ -2,12 +2,12 @@ package igdb
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"sync"
 	"time"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v3/client"
 )
 
 const (
@@ -36,7 +36,7 @@ type Client struct {
 	accessToken  string
 	expiresAt    time.Time
 	mu           sync.RWMutex
-	httpClient   *http.Client
+	fiberClient  *client.Client
 }
 
 // NewClient creates a new IGDB client
@@ -44,30 +44,32 @@ func NewClient(clientID, clientSecret string) *Client {
 	return &Client{
 		clientID:     clientID,
 		clientSecret: clientSecret,
-		httpClient: &http.Client{
-			Timeout: 10 * time.Second,
-		},
+		fiberClient:  client.New(),
 	}
 }
 
 // getAccessToken requests a new access token from Twitch OAuth
 func (c *Client) getAccessToken() error {
-	url := fmt.Sprintf("%s?client_id=%s&client_secret=%s&grant_type=client_credentials",
-		tokenURL, c.clientID, c.clientSecret)
+	cfg := client.Config{
+		Param: map[string]string{
+			"client_id":     c.clientID,
+			"client_secret": c.clientSecret,
+			"grant_type":    "client_credentials",
+		},
+	}
 
-	resp, err := c.httpClient.Post(url, "application/json", nil)
+	resp, err := client.Post(tokenURL, cfg)
 	if err != nil {
 		return fmt.Errorf("failed to request token: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("token request failed with status %d: %s", resp.StatusCode, string(body))
+	if resp.StatusCode() != fiber.StatusOK {
+		return fmt.Errorf("token request failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	var tokenResp TokenResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+	if err := resp.JSON(&tokenResp); err != nil {
 		return fmt.Errorf("failed to decode token response: %w", err)
 	}
 
@@ -102,32 +104,31 @@ func (c *Client) SearchGames(query string) ([]GameSearchResult, error) {
 	// Build IGDB query - search by name, return only main games (game_type = 0)
 	body := fmt.Sprintf(`search "%s"; fields name,url; where game_type = 0;`, query)
 
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBufferString(body))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
 	c.mu.RLock()
 	accessToken := c.accessToken
 	c.mu.RUnlock()
 
-	req.Header.Set("Client-ID", c.clientID)
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
-	req.Header.Set("Content-Type", "text/plain")
+	cfg := client.Config{
+		Header: map[string]string{
+			"Client-ID":     c.clientID,
+			"Authorization": fmt.Sprintf("Bearer %s", accessToken),
+			"Content-Type":  "text/plain",
+		},
+		Body: bytes.NewBufferString(body),
+	}
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := client.Post(apiURL, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search games: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("search request failed with status %d: %s", resp.StatusCode, string(body))
+	if resp.StatusCode() != fiber.StatusOK {
+		return nil, fmt.Errorf("search request failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	var results []GameSearchResult
-	if err := json.NewDecoder(resp.Body).Decode(&results); err != nil {
+	if err := resp.JSON(&results); err != nil {
 		return nil, fmt.Errorf("failed to decode search response: %w", err)
 	}
 
